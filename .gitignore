@@ -1,0 +1,29 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Node / frontend ----
+node_modules/
+dist/
+*.local
+
+# ---- Env & secrets ----
+.env
+backend/.env
+frontend/.env
+
+# ---- Runtime data: uploaded PDFs are never committed ----
+storage/
+backend/storage/
+
+# ---- IDE / OS ----
+.idea/
+.vscode/
+*.iml
+.DS_Store
