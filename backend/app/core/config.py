@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     # ---- OpenAI / provider ----
     openai_api_key: str = "sk-missing"
+    openai_base_url: str | None = None    # override to point at a compatible endpoint (e.g. a local stub)
     anthropic_api_key: str = ""
     llm_provider: str = "openai"          # "openai" | "anthropic" (chat only)
     chat_model: str = "gpt-4o-mini"

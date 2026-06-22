@@ -21,6 +21,7 @@ def get_embeddings() -> Embeddings:
         model=settings.embedding_model,
         dimensions=settings.embedding_dimensions,
         api_key=settings.openai_api_key,
+        base_url=settings.openai_base_url,
     )
 
 
@@ -35,6 +36,7 @@ def get_chat_model() -> BaseChatModel:
             temperature=settings.temperature,
             streaming=True,
             api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url,
         )
 
     # ---- SWITCHING THE CHAT MODEL TO ANTHROPIC CLAUDE ----

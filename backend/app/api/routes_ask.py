@@ -1,6 +1,4 @@
 """The /api/ask endpoint: streams a grounded answer as SSE. Rate-limited per IP."""
-from __future__ import annotations
-
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 

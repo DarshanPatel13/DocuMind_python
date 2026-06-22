@@ -8,14 +8,12 @@
 
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- NOTE ON THE ANN INDEX (IVFFlat vs HNSW):
--- PGVector creates an index on its embedding column. pgvector offers two
--- approximate-nearest-neighbour indexes:
---   * IVFFlat — k-means-clusters the vectors and probes only the nearest
---     clusters. Cheap to build, light on memory, great up to ~100k vectors,
---     but clusters reflect the data present at build time (REINDEX after a
---     big load).
---   * HNSW — a layered proximity graph: better recall/latency at large scale
---     and no build-time training, but slower builds and more memory.
--- Rule of thumb: IVFFlat until millions of vectors or measurable recall
--- problems, then switch to HNSW. The change is a one-line index swap.
+-- NOTE ON THE ANN INDEX:
+-- LangChain's PGVector does NOT create an approximate-nearest-neighbour index
+-- by default. It stores vectors in langchain_pg_embedding and similarity search
+-- runs as an EXACT sequential scan — correct and fast enough at small/medium
+-- scale, which is what this project relies on. At large scale you would add an
+-- index on that table. Prefer HNSW: it builds incrementally and handles rows
+-- inserted after the index is created, whereas IVFFlat trains its clusters on
+-- the data present at build time (so you must REINDEX after a bulk load):
+--     CREATE INDEX ON langchain_pg_embedding USING hnsw (embedding vector_cosine_ops);
