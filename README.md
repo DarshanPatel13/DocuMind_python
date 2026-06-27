@@ -1,5 +1,7 @@
 # DocuMind — Microservices RAG Document Q&A
 
+[![CI](https://github.com/DarshanPatel13/DocuMind_python/actions/workflows/ci.yml/badge.svg)](https://github.com/DarshanPatel13/DocuMind_python/actions/workflows/ci.yml)
+
 DocuMind is a full-stack app where you upload PDFs and ask natural-language
 questions about them. Answers use **retrieval-augmented generation (RAG)**: the
 question is embedded, the most similar chunks are retrieved from
