@@ -4,6 +4,7 @@
 export interface Citation {
   filename: string;
   chunk_index: number;
+  snippet?: string | null;
 }
 
 export type DocumentStatus = "UPLOADED" | "PROCESSING" | "READY" | "FAILED";

@@ -20,10 +20,12 @@ class AskRequest(BaseModel):
 
 class Citation(BaseModel):
     """Pointer to the chunk a statement was grounded on; rendered as
-    [filename, chunk N]."""
+    [filename, chunk N]. `snippet` carries the source text so the UI can show a
+    preview when the chip is clicked (optional for backward compatibility)."""
 
     filename: str
     chunk_index: int
+    snippet: str | None = None
 
 
 class UploadResponse(BaseModel):

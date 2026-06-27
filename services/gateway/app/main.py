@@ -25,6 +25,7 @@ from app.config import settings
 from app.db import engine, init_db
 from app.rate_limit import close_redis, enforce_rate_limit, get_redis
 
+from documind_common.correlation import RequestIdMiddleware  # isort: skip
 from documind_common.logging import configure_logging, get_logger  # isort: skip
 
 configure_logging()
@@ -45,6 +46,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="DocuMind gateway", version="1.0.0", lifespan=lifespan)
 
+# Added last = outermost: a correlation id is assigned before anything else runs.
+app.add_middleware(RequestIdMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,

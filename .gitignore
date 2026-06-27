@@ -13,6 +13,11 @@ node_modules/
 dist/
 *.local
 
+# ---- Playwright / eval artifacts ----
+playwright-report/
+test-results/
+eval/results/
+
 # ---- Env & secrets ----
 .env
 backend/.env

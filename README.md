@@ -109,11 +109,35 @@ with zero code changes. In `.env`: `LLM_PROVIDER=anthropic`,
 `CHAT_MODEL=claude-sonnet-4-6`, `ANTHROPIC_API_KEY=...`, add `langchain-anthropic`
 to `services/query-service/requirements.txt`, and rebuild.
 
-## Roadmap
-- **Day 2** — AI/LLM depth: hybrid retrieval + reranking, Ragas evaluation
-  (`make eval`), Langfuse LLM observability, formalized guardrails.
-- **Day 3** — UI glow-up (shadcn/ui), distributed tracing, Playwright E2E, and the
-  docs that explain it all (`docs/for-java-devs.md`, interview cheatsheet, runbook).
+## AI / LLM engineering
+- **Hybrid retrieval** (pgvector + Postgres full-text) fused with Reciprocal Rank
+  Fusion, plus an optional cross-encoder **reranker**.
+- **Evaluation:** `make eval` reports hit-rate@k / MRR (±rerank) and Ragas
+  faithfulness/relevancy/precision/recall — see [`docs/ai/evaluation.md`](docs/ai/evaluation.md).
+- **Observability:** Langfuse traces every LLM call (`make observability`).
+- **Guardrails:** grounded-only answering + prompt-injection screening.
 
-See [`docs/adr/0001-microservices-split.md`](docs/adr/0001-microservices-split.md)
-for why the architecture looks the way it does and what's deliberately deferred.
+Full AI docs: [`docs/ai/`](docs/ai/).
+
+## UI & quality
+- shadcn/ui + Radix + Tailwind design system, light/dark theme, toasts, streaming
+  chat with skeletons, and citation chips that open a **source-text preview**.
+- **Distributed trace** via a propagated `X-Request-ID` correlation id across all
+  services (see the runbook).
+- Tests: pytest (29) + Vitest/RTL (4) + a hermetic **Playwright** E2E.
+
+## Documentation
+| Doc | What |
+|---|---|
+| [`docs/architecture/container.md`](docs/architecture/container.md) | C4 diagram + request flows |
+| [`docs/adr/0001-microservices-split.md`](docs/adr/0001-microservices-split.md) | why the split, trade-offs, deferred work |
+| [`docs/for-java-devs.md`](docs/for-java-devs.md) | Python/React/AI ↔ Spring/Java glossary |
+| [`docs/ai/`](docs/ai/) | RAG architecture, evaluation, observability, guardrails |
+| [`docs/interview/cheatsheet.md`](docs/interview/cheatsheet.md) | Q&A grounded in this code |
+| [`docs/runbook.md`](docs/runbook.md) | run it, demo script, failure drill, trace how-to |
+
+## Deferred (deliberate next steps)
+gRPC for internal calls, a dedicated retrieval-service, Traefik/Keycloak,
+Kubernetes/Helm, OpenTelemetry + Jaeger, and the AI items in
+[`docs/ai/next-steps.md`](docs/ai/next-steps.md) (agents, MCP, semantic caching,
+model router). Each is noted so it can be discussed, not hand-waved.

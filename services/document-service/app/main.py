@@ -12,6 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
+from documind_common.correlation import RequestIdMiddleware
 from documind_common.logging import configure_logging, get_logger
 from documind_contracts import ErrorResponse
 
@@ -41,6 +42,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="DocuMind document-service", version="1.0.0", lifespan=lifespan)
+app.add_middleware(RequestIdMiddleware)  # correlation id on every request/log
 
 
 def _error(status_code: int, error: str, message: str) -> JSONResponse:

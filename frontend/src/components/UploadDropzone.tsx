@@ -1,4 +1,8 @@
-import { useRef, useState } from "react";
+import { UploadCloud } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+
+import { cn } from "@/lib/utils";
 
 import { useUpload } from "../hooks/useUpload";
 
@@ -13,6 +17,13 @@ export function UploadDropzone() {
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isSuccess) toast.success("Uploaded — ingestion has started");
+  }, [isSuccess]);
+  useEffect(() => {
+    if (isError) toast.error("Upload failed. Please try again.");
+  }, [isError]);
 
   const handleFile = (file: File | undefined): void => {
     setError(null);
@@ -49,12 +60,14 @@ export function UploadDropzone() {
           setDragOver(false);
           handleFile(e.dataTransfer.files?.[0]);
         }}
-        className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
-          dragOver ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white hover:border-gray-400"
-        }`}
+        className={cn(
+          "flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 text-center transition-colors",
+          dragOver ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/50",
+        )}
       >
-        <p className="font-medium text-gray-700">Drag &amp; drop a PDF here</p>
-        <p className="mt-1 text-sm text-gray-500">or click to choose a file (max 20 MB)</p>
+        <UploadCloud className="mb-3 h-8 w-8 text-muted-foreground" />
+        <p className="font-medium">Drag &amp; drop a PDF here</p>
+        <p className="mt-1 text-sm text-muted-foreground">or click to choose a file (max 20 MB)</p>
         <input
           ref={inputRef}
           type="file"
@@ -67,17 +80,13 @@ export function UploadDropzone() {
 
       {isPending && (
         <div className="mt-3">
-          <div className="h-2 w-full overflow-hidden rounded bg-gray-200">
-            <div className="h-full bg-blue-600 transition-all" style={{ width: `${progress}%` }} />
+          <div className="h-2 w-full overflow-hidden rounded bg-muted">
+            <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
           </div>
-          <p className="mt-1 text-xs text-gray-500">Uploading… {progress}%</p>
+          <p className="mt-1 text-xs text-muted-foreground">Uploading… {progress}%</p>
         </div>
       )}
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      {isError && <p className="mt-3 text-sm text-red-600">Upload failed. Please try again.</p>}
-      {isSuccess && !error && (
-        <p className="mt-3 text-sm text-green-600">Uploaded — processing has started.</p>
-      )}
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
     </div>
   );
 }

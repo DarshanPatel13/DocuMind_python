@@ -72,6 +72,7 @@ class AskService:
             Citation(
                 filename=str(doc.metadata.get("filename", "unknown")),
                 chunk_index=int(doc.metadata.get("chunk_index", 0)),
+                snippet=doc.page_content[:600],  # source preview for the UI
             )
             for doc in docs
         ]

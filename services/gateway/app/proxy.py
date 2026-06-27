@@ -14,6 +14,8 @@ import httpx
 from fastapi import Request
 from fastapi.responses import StreamingResponse
 
+from documind_common.correlation import REQUEST_ID_HEADER, get_request_id
+
 # Hop-by-hop headers must not be forwarded (RFC 7230 §6.1) + ones httpx recomputes.
 _HOP_BY_HOP = {
     "host",
@@ -54,6 +56,11 @@ async def proxy(request: Request, upstream_base: str) -> StreamingResponse:
 
     body = await request.body()
     headers = {k: v for k, v in request.headers.items() if k.lower() not in _HOP_BY_HOP}
+
+    # Forward the correlation id so upstream logs share this request's trace.
+    request_id = get_request_id()
+    if request_id:
+        headers[REQUEST_ID_HEADER] = request_id
 
     upstream_req = _client.build_request(
         request.method, url, headers=headers, content=body
