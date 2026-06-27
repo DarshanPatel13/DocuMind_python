@@ -15,6 +15,8 @@ embedding model/dimensions/collection. Everything else stays inside each service
 from documind_common.config import settings
 from documind_common.logging import configure_logging, get_logger
 from documind_common.providers import get_chat_model, get_embeddings
+from documind_common.reranker import get_reranker
+from documind_common.retrieval import reciprocal_rank_fusion, retrieve
 from documind_common.vector_store import add_chunks, get_vector_store, search
 
 __all__ = [
@@ -26,4 +28,7 @@ __all__ = [
     "add_chunks",
     "get_vector_store",
     "search",
+    "retrieve",
+    "reciprocal_rank_fusion",
+    "get_reranker",
 ]

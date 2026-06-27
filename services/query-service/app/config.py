@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     mongo_uri: str = "mongodb://localhost:27017"
     mongo_db: str = "documind"
 
+    # ---- Langfuse LLM observability (no-op unless a public key is set) ----
+    langfuse_public_key: str = ""
+    langfuse_secret_key: str = ""
+    langfuse_host: str = "http://localhost:3000"
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -1,0 +1,10 @@
+{"question": "How many PTO days do full-time employees get per year?", "relevant_substring": "20 days of paid time off", "ground_truth": "Full-time employees receive 20 days of paid time off per year."}
+{"question": "How many days per week can I work remotely?", "relevant_substring": "up to 3 days per week", "ground_truth": "Employees may work remotely up to 3 days per week."}
+{"question": "What is the deadline to submit business expenses?", "relevant_substring": "within 30 days", "ground_truth": "Business expenses must be submitted within 30 days of purchase."}
+{"question": "What is the daily cap for meal reimbursement while travelling?", "relevant_substring": "$50 per day", "ground_truth": "Meals are reimbursed up to $50 per day."}
+{"question": "When does health insurance coverage begin?", "relevant_substring": "after 30 days of employment", "ground_truth": "Health insurance begins after 30 days of employment."}
+{"question": "How much paid parental leave does Acme offer?", "relevant_substring": "16 weeks of fully paid parental leave", "ground_truth": "Acme offers 16 weeks of fully paid parental leave."}
+{"question": "What percentage does the company match for 401(k)?", "relevant_substring": "up to 4%", "ground_truth": "The company matches 401(k) contributions up to 4% of salary."}
+{"question": "How long is the probation period for new hires?", "relevant_substring": "probation period of 90 days", "ground_truth": "New hires serve a 90-day probation period."}
+{"question": "Who should I report a security incident to?", "relevant_substring": "security@acme.com", "ground_truth": "Report security incidents within 24 hours to security@acme.com."}
+{"question": "What is the home office stipend amount?", "relevant_substring": "home office stipend of $1,500", "ground_truth": "New employees receive a one-time $1,500 home office stipend."}

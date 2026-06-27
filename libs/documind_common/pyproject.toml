@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "documind-common"
 version = "0.1.0"
-description = "Shared RAG plumbing for DocuMind: LLM/embeddings providers, the pgvector store, config, and logging."
+description = "Shared RAG plumbing for DocuMind: LLM/embeddings providers, the pgvector store, hybrid retrieval, config, and logging."
 requires-python = ">=3.12"
 dependencies = [
     "pydantic-settings>=2.6,<3",
@@ -19,3 +19,8 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["documind_common*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]

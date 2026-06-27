@@ -44,11 +44,25 @@ class CommonSettings(BaseSettings):
     top_k: int = 4
     vector_collection: str = "documind_chunks"
 
+    # ---- Hybrid retrieval + reranking (Day 2) ----
+    hybrid_enabled: bool = True          # vector + keyword (Postgres FTS), fused with RRF
+    retrieval_candidates: int = 20       # how many to pull per arm BEFORE rerank/trim
+    reranker: str = "none"               # "none" | "cross-encoder"
+    reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
     @property
     def pgvector_url(self) -> str:
-        """Connection string PGVector uses (psycopg3 driver)."""
+        """Connection string PGVector uses (SQLAlchemy + psycopg3 driver)."""
         return (
             f"postgresql+psycopg://{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
+
+    @property
+    def psycopg_conninfo(self) -> str:
+        """Plain libpq DSN for raw psycopg queries (the keyword-search arm)."""
+        return (
+            f"postgresql://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
 

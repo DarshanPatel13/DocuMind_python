@@ -35,5 +35,9 @@ test: ## Run every service's unit tests (in containers)
 seed: ## Upload the sample PDFs in ./samples (placeholder for Day 1)
 	@echo "Drop PDFs in ./samples and POST them to the gateway — see docs/runbook.md"
 
-eval: ## RAG evaluation suite (added on Day 2)
-	@echo "make eval is wired up on Day 2 (Ragas). See docs/ai/evaluation.md"
+eval: ## RAG eval (retrieval + Ragas). Needs OPENAI_API_KEY exported + `make up` running.
+	VECTOR_COLLECTION=documind_eval POSTGRES_HOST=localhost python eval/run_eval.py --judge
+
+observability: ## Start Langfuse (LLM tracing) at http://localhost:3000
+	$(COMPOSE) --profile observability up -d langfuse langfuse-db
+	@echo "Langfuse  http://localhost:3000  — create a project, copy keys into .env, restart query-service"

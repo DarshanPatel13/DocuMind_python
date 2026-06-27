@@ -15,13 +15,15 @@ import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime, timezone
 
-from documind_common import vector_store
+from documind_common import retrieval
 from documind_common.config import settings
 from documind_common.logging import get_logger
 from documind_common.providers import get_chat_model
 from documind_contracts import AskRequest, Citation
 
 from app import conversation_service
+from app.guardrails import INJECTION_REFUSAL, detect_prompt_injection
+from app.observability import get_langfuse_handler
 from app.prompt import NO_INFO_ANSWER, build_messages
 
 log = get_logger(__name__)
@@ -45,8 +47,26 @@ class AskService:
     async def answer_stream(self, req: AskRequest) -> AsyncIterator[str]:
         conversation_id = req.conversation_id or uuid.uuid4().hex
 
-        # 1. Retrieve top-k chunks (optionally scoped to one document).
-        results = await vector_store.search(req.question, self.top_k, req.document_id)
+        # 0. Guardrail: reject prompt-injection before any retrieval/LLM work.
+        if detect_prompt_injection(req.question):
+            log.warning(
+                "blocked prompt injection", stage="guardrail", conversation_id=conversation_id
+            )
+            yield _sse({"type": "citations", "conversation_id": conversation_id, "citations": []})
+            yield _sse({"type": "token", "token": INJECTION_REFUSAL})
+            yield _sse({"type": "done"})
+            await conversation_service.save_turn(
+                conversation_id=conversation_id,
+                question=req.question,
+                answer=INJECTION_REFUSAL,
+                citations=[],
+                retrieved_chunk_ids=[],
+                timestamp=datetime.now(timezone.utc),
+            )
+            return
+
+        # 1. Hybrid retrieval (vector + keyword, fused + optionally reranked).
+        results = await retrieval.retrieve(req.question, self.top_k, req.document_id)
         docs = [doc for doc, _score in results]
         citations = [
             Citation(
@@ -77,8 +97,11 @@ class AskService:
             yield _sse({"type": "token", "token": answer})
         else:
             messages = build_messages(req.question, docs)
+            # Trace this LLM call in Langfuse when configured (no-op otherwise).
+            handler = get_langfuse_handler()
+            config = {"callbacks": [handler]} if handler else {}
             parts: list[str] = []
-            async for chunk in self.chat_model.astream(messages):
+            async for chunk in self.chat_model.astream(messages, config=config):
                 token = chunk.content if isinstance(chunk.content, str) else ""
                 if token:
                     parts.append(token)
