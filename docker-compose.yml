@@ -1,0 +1,187 @@
+# DocuMind — full microservices stack. One command:
+#
+#     docker compose up --build
+#
+# Brings up infra (Postgres/pgvector, MongoDB, Kafka, Redis) + the three services
+# (gateway, document-service, query-service) + the frontend (Nginx).
+# Set OPENAI_API_KEY in a root .env file first (see .env.example).
+services:
+
+  # ---------------- Infrastructure ----------------
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: documind
+      POSTGRES_USER: documind
+      POSTGRES_PASSWORD: documind
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./infra/init-scripts:/docker-entrypoint-initdb.d   # enables the vector extension
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U documind -d documind"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  kafka:
+    image: apache/kafka:3.7.0
+    ports:
+      - "9094:9094"   # host access (optional); services use kafka:9092 in-network
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  # ---------------- Services ----------------
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      DEMO_USERNAME: ${DEMO_USERNAME:-demo}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-demo12345}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-10}
+      REDIS_URL: redis://redis:6379/0
+      DOCUMENT_SERVICE_URL: http://document-service:8001
+      QUERY_SERVICE_URL: http://query-service:8002
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      POSTGRES_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  document-service:
+    build:
+      context: .
+      dockerfile: services/document-service/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
+      VECTOR_COLLECTION: documind_chunks
+      POSTGRES_HOST: postgres
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      STORAGE_DIR: /data/storage
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  query-service:
+    build:
+      context: .
+      dockerfile: services/query-service/Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      CHAT_MODEL: ${CHAT_MODEL:-gpt-4o-mini}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      VECTOR_COLLECTION: documind_chunks
+      TOP_K: ${TOP_K:-4}
+      HYBRID_ENABLED: ${HYBRID_ENABLED:-true}
+      RERANKER: ${RERANKER:-none}
+      POSTGRES_HOST: postgres
+      MONGO_URI: mongodb://mongodb:27017
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-http://langfuse:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+    ports:
+      - "5173:80"
+    depends_on:
+      - gateway
+
+  # ---------------- Observability (opt-in: --profile observability) ----------------
+  # Self-hosted Langfuse for LLM tracing. Kept out of the default `up` so the
+  # core stack stays light. Start with:  make observability
+  langfuse-db:
+    image: postgres:16
+    profiles: ["observability"]
+    environment:
+      POSTGRES_DB: langfuse
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: langfuse
+    volumes:
+      - langfusedb:/var/lib/postgresql/data
+
+  langfuse:
+    image: langfuse/langfuse:2
+    profiles: ["observability"]
+    depends_on:
+      - langfuse-db
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://langfuse:langfuse@langfuse-db:5432/langfuse
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:-changeme-langfuse-secret}
+      SALT: ${LANGFUSE_SALT:-changeme-langfuse-salt}
+      TELEMETRY_ENABLED: "false"
+
+volumes:
+  pgdata:
+  mongodata:
+  storage:
+  langfusedb:

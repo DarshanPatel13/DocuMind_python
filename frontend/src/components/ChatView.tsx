@@ -1,4 +1,11 @@
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, SendHorizonal } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { useAsk } from "../hooks/useAsk";
 import { CitationChip } from "./CitationChip";
@@ -25,42 +32,63 @@ export function ChatView({ documentId, onConversationId }: ChatViewProps) {
     void ask(trimmed, documentId);
   };
 
+  const showSkeleton = isStreaming && !answer;
+
   return (
     <div className="flex flex-col gap-4">
       <form onSubmit={onSubmit} className="flex gap-2">
-        <input
+        <Input
           type="text"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="Ask a question about your documents…"
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
         />
-        <button
-          type="submit"
-          disabled={isStreaming || question.trim().length === 0}
-          className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <Button type="submit" disabled={isStreaming || question.trim().length === 0}>
+          {isStreaming ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <SendHorizonal className="h-4 w-4" />
+          )}
           {isStreaming ? "Asking…" : "Ask"}
-        </button>
+        </Button>
       </form>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
-      {(answer || isStreaming) && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <p className="whitespace-pre-wrap text-gray-800">
-            {answer}
-            {isStreaming && <span className="ml-0.5 animate-pulse">▋</span>}
-          </p>
-          {citations.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {citations.map((c) => (
-                <CitationChip key={`${c.filename}-${c.chunk_index}`} citation={c} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <AnimatePresence>
+        {(answer || isStreaming) && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Card>
+              <CardContent className="p-4">
+                {showSkeleton ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap leading-relaxed">
+                    {answer}
+                    {isStreaming && <span className="ml-0.5 animate-pulse">▋</span>}
+                  </p>
+                )}
+                {citations.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {citations.map((c) => (
+                      <CitationChip key={`${c.filename}-${c.chunk_index}`} citation={c} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

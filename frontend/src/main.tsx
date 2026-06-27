@@ -4,6 +4,9 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
+import { ThemeProvider } from "./components/theme-provider";
+import { Toaster } from "./components/ui/sonner";
+import { AuthProvider } from "./auth/AuthContext";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -15,9 +18,14 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </BrowserRouter>
+        <Toaster />
+      </ThemeProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 );

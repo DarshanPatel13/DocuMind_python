@@ -2,6 +2,23 @@
 
 This guide makes the project *yours*. Read it top to bottom, then have Claude quiz you on Section 4 — alternating AI, Python, and React.
 
+> ⚠️ **Restructure note.** This guide describes the original **modular-monolith**
+> layout (`backend/app/...`). The project has since been split into microservices,
+> so the *concepts* below are all still accurate but the **file paths have moved**:
+>
+> | Old path (this guide) | New location |
+> |---|---|
+> | `backend/app/api/routes_documents.py`, `services/document_service.py` | `services/document-service/app/{routes,service}.py` |
+> | `backend/app/kafka/*`, `services/ingestion_service.py` | `services/document-service/app/{producer,consumer,ingestion}.py` |
+> | `backend/app/api/routes_ask.py`, `services/ask_service.py` | `services/query-service/app/{routes_ask,ask_service}.py` |
+> | `backend/app/rag/{providers,vector_store}.py` | `libs/documind_common/documind_common/` |
+> | `backend/app/models/*` | `libs/documind_contracts/` |
+>
+> For the current architecture and a Spring/Java glossary, start with
+> [`docs/architecture/container.md`](docs/architecture/container.md),
+> [`docs/for-java-devs.md`](docs/for-java-devs.md), and the
+> [`docs/`](docs/) tree (AI deep-dives, ADRs, interview cheatsheet, runbook).
+
 ---
 
 ## 1. Big picture

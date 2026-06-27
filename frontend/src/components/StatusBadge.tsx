@@ -1,16 +1,23 @@
+import { CheckCircle2, Clock, Loader2, XCircle } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
 import type { DocumentStatus } from "../types";
 
-const STYLES: Record<DocumentStatus, string> = {
-  UPLOADED: "bg-gray-100 text-gray-700",
-  PROCESSING: "bg-amber-100 text-amber-800",
-  READY: "bg-green-100 text-green-800",
-  FAILED: "bg-red-100 text-red-800",
-};
+const MAP = {
+  UPLOADED: { variant: "secondary", icon: Clock },
+  PROCESSING: { variant: "warning", icon: Loader2 },
+  READY: { variant: "success", icon: CheckCircle2 },
+  FAILED: { variant: "destructive", icon: XCircle },
+} as const;
 
 export function StatusBadge({ status }: { status: DocumentStatus }) {
+  const { variant, icon: Icon } = MAP[status];
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STYLES[status]}`}>
+    <Badge variant={variant} className="gap-1">
+      <Icon className={cn("h-3 w-3", status === "PROCESSING" && "animate-spin")} />
       {status}
-    </span>
+    </Badge>
   );
 }

@@ -1,14 +1,21 @@
 import type { AxiosProgressEvent } from "axios";
 
+import { getToken } from "../auth/token";
 import type {
   AskRequest,
   AskStreamHandlers,
   ConversationHistory,
   DocumentResponse,
-  StreamEvent,
+  TokenResponse,
   UploadResponse,
+  StreamEvent,
 } from "../types";
 import { API_BASE_URL, apiClient } from "./client";
+
+export async function login(username: string, password: string): Promise<TokenResponse> {
+  const { data } = await apiClient.post<TokenResponse>("/auth/login", { username, password });
+  return data;
+}
 
 export async function listDocuments(): Promise<DocumentResponse[]> {
   const { data } = await apiClient.get<DocumentResponse[]>("/api/documents");
@@ -51,9 +58,13 @@ export async function streamAsk(
 ): Promise<void> {
   let response: Response;
   try {
+    const token = getToken();
     response = await fetch(`${API_BASE_URL}/api/ask`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(body),
       signal,
     });

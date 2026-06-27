@@ -4,6 +4,7 @@
 export interface Citation {
   filename: string;
   chunk_index: number;
+  snippet?: string | null;
 }
 
 export type DocumentStatus = "UPLOADED" | "PROCESSING" | "READY" | "FAILED";
@@ -21,6 +22,11 @@ export interface UploadResponse {
   document_id: string;
   status: string;
   message: string;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
 }
 
 export interface AskRequest {

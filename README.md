@@ -1,122 +1,145 @@
-# DocuMind — Full-Stack RAG Document Q&A
+# DocuMind — Microservices RAG Document Q&A
 
-DocuMind is a web app where you upload PDF documents and ask natural-language questions about them. Answers are generated with retrieval-augmented generation (RAG): the question is embedded, the most similar chunks are retrieved from PostgreSQL/pgvector, and `gpt-4o-mini` answers **only** from that context — streaming token-by-token to a React UI with `[filename, chunk N]` citations. Ingestion is asynchronous: uploads publish a Kafka event and a background consumer extracts (pypdf), chunks (LangChain), embeds (OpenAI), and indexes the document. Conversation history lives in MongoDB. The backend is **FastAPI + LangChain** (Python 3.12); the frontend is **React 18 + TypeScript + TanStack Query**. The chat model is provider-pluggable — swapping to Anthropic Claude is config + one dependency, no code changes.
+[![CI](https://github.com/DarshanPatel13/DocuMind_python/actions/workflows/ci.yml/badge.svg)](https://github.com/DarshanPatel13/DocuMind_python/actions/workflows/ci.yml)
+
+DocuMind is a full-stack app where you upload PDFs and ask natural-language
+questions about them. Answers use **retrieval-augmented generation (RAG)**: the
+question is embedded, the most similar chunks are retrieved from
+PostgreSQL/pgvector, and the LLM answers **only** from that context — streaming
+token-by-token to a React UI with `[filename, chunk N]` citations.
+
+As of Day 1 it runs as **three independent services behind an API gateway**:
+
+| Service | Stack | Responsibility |
+|---|---|---|
+| **gateway** | FastAPI · PyJWT · bcrypt · Redis · httpx | JWT auth, CORS, rate limiting, streaming reverse proxy |
+| **document-service** | FastAPI · aiokafka · SQLAlchemy async | uploads, metadata, async ingestion (extract→chunk→embed) |
+| **query-service** | FastAPI · LangChain · Motor | RAG ask flow (streamed SSE), conversation history |
+| **frontend** | React 18 · TS · Vite · TanStack Query · Tailwind | upload, streaming chat, history, login |
+
+Shared code lives in two libraries: **`libs/documind_contracts`** (Pydantic
+events + DTOs) and **`libs/documind_common`** (LLM/embeddings providers + the
+pgvector store + the embedding config the writer and reader must agree on).
+
+> Coming from Java/Spring? Every component maps to something you know — see
+> [`docs/for-java-devs.md`](docs/for-java-devs.md) *(added Day 3)* and the
+> architecture decision record [`docs/adr/0001`](docs/adr/0001-microservices-split.md).
 
 ## Architecture
 
-```
- FLOW 1 — UPLOAD & INGESTION (async)
- ====================================
-  React            FastAPI                         Kafka            Ingestion consumer
-   │  POST /api/documents (PDF)                       │                    │
-   │ ───────────────► validate (%PDF, <20MB)          │                    │
-   │                  store ./storage/{id}.pdf        │                    │
-   │                  INSERT documents (UPLOADED) ─────────► [Postgres]    │
-   │                  publish document.uploaded ─────►│                    │
-   │ ◄─── 202 {document_id}                           │ document-events ──►│
-   │                                                  │                    │ status=PROCESSING
-   │                                                  │                    │ pypdf extract
-   │                                                  │                    │ LangChain split (~800 tok/100)
-   │                                                  │                    │ embed batch ──► [OpenAI]
-   │                                                  │                    │ upsert ──► [pgvector]
-   │                                                  │                    │ status=READY
-   │                                                  │  retries → DLT     │
-   │                                                  │◄─ document-events.DLT (status=FAILED)
+See [`docs/architecture/container.md`](docs/architecture/container.md) for the C4
+container diagram and the two request flows. In short:
 
- FLOW 2 — ASK (sync, streamed)
- ====================================
-  React (TanStack Query / fetch SSE)        FastAPI                    Stores / LLM
-   │  POST /api/ask {question, document_id?}    │                          │
-   │ ─────────────────────────────────────────►│ embed question ─────────► [OpenAI]
-   │                                            │ top-4 cosine search ────► [pgvector]
-   │ ◄── SSE: {citations, conversation_id}      │ grounded prompt ────────► [gpt-4o-mini]
-   │ ◄── SSE: {token} {token} {token} …         │ (stream)                 │
-   │ ◄── SSE: {done}                            │ persist turn ───────────► [MongoDB]
-   │  render answer token-by-token + chips      │                          │
+```
+                         ┌────────────┐
+  Browser ──HTTPS──▶ gateway ──REST──▶ document-service ──▶ Postgres (documents)
+  (React)            (JWT, CORS,        │  └─Kafka──▶ ingestion consumer ──▶ pgvector (write)
+                      rate-limit,       │
+                      SSE passthrough) ─┴─REST + SSE──▶ query-service ──▶ pgvector (read)
+                                                         └──▶ MongoDB (conversation history)
+                         Redis (rate-limit)              └──▶ OpenAI (embeddings + chat)
 ```
 
 ## Prerequisites
+- Docker Desktop
+- An OpenAI API key with a little credit ([platform.openai.com](https://platform.openai.com))
+- (For local, non-Docker dev: Python 3.12, Node 20+)
 
-- Python 3.12, Node 20+, Docker Desktop
-- An OpenAI API key with a few dollars of credit ([platform.openai.com](https://platform.openai.com))
-
-## Run the backend
+## Quickstart — one command
 
 ```bash
-cd backend
-
-# 1. Infra: Postgres+pgvector, MongoDB, Kafka (KRaft)
-docker compose up -d
-
-# 2. Python env + deps
-python -m venv .venv
-# Windows:  .venv\Scripts\activate     macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-
-# 3. Config
-cp .env.example .env        # then set OPENAI_API_KEY in .env
-
-# 4. Run the API (creates tables + Kafka topics, starts the consumer)
-uvicorn app.main:app --reload --port 8000
+cp .env.example .env          # then set OPENAI_API_KEY in .env
+docker compose up --build     # or:  make up
 ```
 
-Interactive API docs (Swagger): <http://localhost:8000/docs>
+- Frontend: <http://localhost:5173>
+- Gateway (API): <http://localhost:8080> — interactive docs at `/docs`
+- **Login:** `demo` / `demo12345`
 
-## Run the frontend
+Then: **Upload** a PDF, watch the status go `UPLOADED → PROCESSING → READY`, go to
+**Ask**, and watch a grounded answer stream in with citation chips.
+
+## Make targets
 
 ```bash
-cd frontend
-npm install
-cp .env.example .env        # VITE_API_BASE_URL defaults to http://localhost:8000
-npm run dev                 # http://localhost:5173
+make up      # build + start the whole stack
+make down    # stop it
+make logs    # tail all logs
+make test    # run every service's unit tests (in containers)
+make ps      # show running containers
 ```
 
-## API (curl)
+## API (through the gateway)
 
 ```bash
-# Upload a PDF (202, async ingestion)
-curl -X POST http://localhost:8000/api/documents -F "file=@mydoc.pdf"
-
-# List documents (poll until status READY)
-curl http://localhost:8000/api/documents
-
-# Ask — streams Server-Sent Events
-curl -N -X POST http://localhost:8000/api/ask \
+# 1. Log in -> JWT
+TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
+  -d '{"username":"demo","password":"demo12345"}' | python -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+
+# 2. Upload a PDF (202, async ingestion)
+curl -X POST http://localhost:8080/api/documents \
+  -H "Authorization: Bearer $TOKEN" -F "file=@mydoc.pdf"
+
+# 3. List documents (poll until READY)
+curl http://localhost:8080/api/documents -H "Authorization: Bearer $TOKEN"
+
+# 4. Ask — streams Server-Sent Events
+curl -N -X POST http://localhost:8080/api/ask \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"question": "What is the refund policy?"}'
-
-# Scope to one document / continue a conversation
-curl -N -X POST http://localhost:8000/api/ask \
-  -H "Content-Type: application/json" \
-  -d '{"question": "And for digital goods?", "conversation_id": "<id-from-stream>"}'
-
-# Conversation history
-curl http://localhost:8000/api/conversations/<conversation_id>
 ```
 
-The `/api/ask` stream emits one JSON object per SSE line: first `{"type":"citations",...}`, then many `{"type":"token","token":"..."}`, then `{"type":"done"}`.
-
-## 5-step demo script
-
-1. `docker compose up -d` and `uvicorn app.main:app --reload` (with `OPENAI_API_KEY` set), then `npm run dev` — open <http://localhost:5173>.
-2. On **Upload**, drag in a PDF. Watch the status badge go `UPLOADED → PROCESSING → READY` (TanStack Query auto-polls); the backend log shows `stage=processing → chunked → ready`.
-3. Go to **Ask**, type a question the document answers — watch the answer **stream in token-by-token** with citation chips.
-4. Ask something the document does *not* cover — get the exact "I don't have enough information in the uploaded documents." (hallucination control, live).
-5. Reload and open a past conversation from the sidebar — it loads from MongoDB via `GET /api/conversations/{id}`.
-
-## Switching the chat model to Claude
-
-Embeddings stay on OpenAI (Anthropic has no embeddings API), but the chat model swaps with zero code changes — `app/rag/providers.py` only returns a LangChain `BaseChatModel`:
-
-1. `pip install langchain-anthropic`
-2. In `backend/.env`: `LLM_PROVIDER=anthropic`, `CHAT_MODEL=claude-sonnet-4-6`, `ANTHROPIC_API_KEY=...`
-3. Restart `uvicorn`.
+The `/api/ask` stream emits one JSON object per SSE line: first
+`{"type":"citations",...}`, then many `{"type":"token","token":"..."}`, then
+`{"type":"done"}`.
 
 ## Tests
 
 ```bash
-cd backend  && pytest                # chunking, upload validation, grounding, retrieval
-cd frontend && npm test              # Vitest + RTL (streaming, citations, upload validation)
+make test                                   # all services, in containers
+# or per service, locally:
+cd services/gateway          && pytest      # JWT + bcrypt
+cd services/document-service && pytest      # chunking, upload validation
+cd services/query-service    && pytest      # grounding, retrieval
+cd frontend                  && npm test    # Vitest + RTL
 ```
 
-See [LEARNING_GUIDE.md](LEARNING_GUIDE.md) for the full walkthrough, deep dives, and interview prep across AI/RAG, Python, and React.
+## Switching the chat model to Claude
+Embeddings stay on OpenAI (Anthropic has no embeddings API); the chat model swaps
+with zero code changes. In `.env`: `LLM_PROVIDER=anthropic`,
+`CHAT_MODEL=claude-sonnet-4-6`, `ANTHROPIC_API_KEY=...`, add `langchain-anthropic`
+to `services/query-service/requirements.txt`, and rebuild.
+
+## AI / LLM engineering
+- **Hybrid retrieval** (pgvector + Postgres full-text) fused with Reciprocal Rank
+  Fusion, plus an optional cross-encoder **reranker**.
+- **Evaluation:** `make eval` reports hit-rate@k / MRR (±rerank) and Ragas
+  faithfulness/relevancy/precision/recall — see [`docs/ai/evaluation.md`](docs/ai/evaluation.md).
+- **Observability:** Langfuse traces every LLM call (`make observability`).
+- **Guardrails:** grounded-only answering + prompt-injection screening.
+
+Full AI docs: [`docs/ai/`](docs/ai/).
+
+## UI & quality
+- shadcn/ui + Radix + Tailwind design system, light/dark theme, toasts, streaming
+  chat with skeletons, and citation chips that open a **source-text preview**.
+- **Distributed trace** via a propagated `X-Request-ID` correlation id across all
+  services (see the runbook).
+- Tests: pytest (29) + Vitest/RTL (4) + a hermetic **Playwright** E2E.
+
+## Documentation
+| Doc | What |
+|---|---|
+| [`docs/architecture/container.md`](docs/architecture/container.md) | C4 diagram + request flows |
+| [`docs/adr/0001-microservices-split.md`](docs/adr/0001-microservices-split.md) | why the split, trade-offs, deferred work |
+| [`docs/for-java-devs.md`](docs/for-java-devs.md) | Python/React/AI ↔ Spring/Java glossary |
+| [`docs/ai/`](docs/ai/) | RAG architecture, evaluation, observability, guardrails |
+| [`docs/interview/cheatsheet.md`](docs/interview/cheatsheet.md) | Q&A grounded in this code |
+| [`docs/runbook.md`](docs/runbook.md) | run it, demo script, failure drill, trace how-to |
+
+## Deferred (deliberate next steps)
+gRPC for internal calls, a dedicated retrieval-service, Traefik/Keycloak,
+Kubernetes/Helm, OpenTelemetry + Jaeger, and the AI items in
+[`docs/ai/next-steps.md`](docs/ai/next-steps.md) (agents, MCP, semantic caching,
+model router). Each is noted so it can be discussed, not hand-waved.

@@ -1,0 +1,6 @@
+# Eval harness deps. Install into your local venv to run `make eval`:
+#   pip install -e libs/documind_contracts -e libs/documind_common
+#   pip install -r eval/requirements.txt
+ragas>=0.2,<0.3                   # RAG evaluation (LLM-as-judge metrics)
+sentence-transformers>=3.0        # cross-encoder reranker (for the before/after)
+langchain-text-splitters>=0.3,<0.4
