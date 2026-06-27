@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "documind-common"
+version = "0.1.0"
+description = "Shared RAG plumbing for DocuMind: LLM/embeddings providers, the pgvector store, config, and logging."
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic-settings>=2.6,<3",
+    "structlog>=24.4",
+    "langchain-core>=0.3,<0.4",
+    "langchain-openai>=0.2,<0.4",
+    "langchain-postgres>=0.0.12",
+    "psycopg[binary]>=3.2",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["documind_common*"]

@@ -23,6 +23,11 @@ export interface UploadResponse {
   message: string;
 }
 
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+}
+
 export interface AskRequest {
   question: string;
   document_id?: string;

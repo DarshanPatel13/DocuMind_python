@@ -1,0 +1,22 @@
+# Service-specific deps. The shared libs (documind-contracts, documind-common)
+# are installed separately in the Dockerfile and pull in langchain-openai,
+# langchain-postgres, psycopg, etc.
+fastapi>=0.115,<0.116
+uvicorn[standard]>=0.32,<0.35
+python-multipart>=0.0.12          # multipart/form-data parsing for file uploads
+
+pydantic>=2.9,<3
+pydantic-settings>=2.6,<3
+
+SQLAlchemy>=2.0,<3
+asyncpg>=0.30                     # async driver for the metadata engine
+
+aiokafka>=0.12                    # async producer + ingestion consumer
+pypdf>=5.1                        # PDF text extraction
+langchain-text-splitters>=0.3,<0.4
+
+structlog>=24.4
+
+# Tests
+pytest>=8.3
+pytest-asyncio>=0.24

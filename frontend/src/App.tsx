@@ -1,6 +1,8 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 
+import { useAuth } from "./auth/AuthContext";
 import { AskPage } from "./pages/AskPage";
+import { LoginPage } from "./pages/LoginPage";
 import { UploadPage } from "./pages/UploadPage";
 
 function NavTab({ to, label }: { to: string; label: string }) {
@@ -19,6 +21,16 @@ function NavTab({ to, label }: { to: string; label: string }) {
 }
 
 export default function App() {
+  const { isAuthenticated, logout } = useAuth();
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 text-gray-900">
+        <LoginPage />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <header className="border-b border-gray-200 bg-white">
@@ -26,9 +38,15 @@ export default function App() {
           <span className="text-lg font-bold">
             Docu<span className="text-blue-600">Mind</span>
           </span>
-          <nav className="flex gap-1">
+          <nav className="flex items-center gap-1">
             <NavTab to="/upload" label="Upload" />
             <NavTab to="/ask" label="Ask" />
+            <button
+              onClick={logout}
+              className="ml-2 rounded-md px-3 py-1.5 text-sm font-medium text-gray-500 hover:bg-gray-100"
+            >
+              Sign out
+            </button>
           </nav>
         </div>
       </header>

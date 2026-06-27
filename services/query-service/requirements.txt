@@ -1,0 +1,14 @@
+# Service-specific deps. The shared libs (documind-contracts, documind-common)
+# are installed separately in the Dockerfile and pull in langchain, the pgvector
+# store, and the OpenAI client.
+fastapi>=0.115,<0.116
+uvicorn[standard]>=0.32,<0.35
+
+pydantic>=2.9,<3
+pydantic-settings>=2.6,<3
+
+motor>=3.6                        # async MongoDB driver (conversation history)
+
+# Tests
+pytest>=8.3
+pytest-asyncio>=0.24

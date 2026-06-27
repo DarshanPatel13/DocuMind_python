@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "documind-contracts"
+version = "0.1.0"
+description = "Shared wire contracts (Pydantic events + DTOs) for DocuMind services."
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2.9,<3"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["documind_contracts*"]

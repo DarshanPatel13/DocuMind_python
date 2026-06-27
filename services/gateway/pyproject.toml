@@ -1,0 +1,13 @@
+[project]
+name = "documind-gateway"
+version = "1.0.0"
+description = "DocuMind API gateway: JWT auth, rate limiting, and streaming reverse proxy."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
