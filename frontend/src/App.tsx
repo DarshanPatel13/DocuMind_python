@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 import { useAuth } from "./auth/AuthContext";
 import { AskPage } from "./pages/AskPage";
-import { LoginPage } from "./pages/LoginPage";
+import { LandingPage } from "./pages/LandingPage";
 import { UploadPage } from "./pages/UploadPage";
 
 function NavTab({ to, label, icon }: { to: string; label: string; icon: React.ReactNode }) {
@@ -46,10 +46,13 @@ export default function App() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background text-foreground">
-        <div className="absolute right-5 top-5 z-10">
-          <ThemeToggle />
-        </div>
-        <LoginPage />
+        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/60 backdrop-blur-xl">
+          <div className="container flex h-16 items-center justify-between">
+            <Brand />
+            <ThemeToggle />
+          </div>
+        </header>
+        <LandingPage />
       </div>
     );
   }

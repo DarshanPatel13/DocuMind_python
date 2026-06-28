@@ -29,6 +29,9 @@
     --ring: 222 89% 55%;
     --radius: 1rem;
 
+    /* apple.com-style alternating section surface (light gray #f5f5f7) */
+    --surface-alt: 240 20% 97%;
+
     /* ambient glow blobs */
     --glow-a: 222 90% 56%;
     --glow-b: 265 85% 60%;
@@ -57,6 +60,7 @@
     --input: 240 6% 18%;
     --ring: 217 92% 62%;
 
+    --surface-alt: 240 8% 9%;
     --glow-strength: 0.22;
   }
 

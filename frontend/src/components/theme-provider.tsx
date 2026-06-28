@@ -22,7 +22,7 @@ const ThemeContext = createContext<ThemeState | null>(null);
 function initialTheme(): Theme {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === "light" || stored === "dark") return stored;
-  return "dark"; // dark-first for the premium default; user can toggle
+  return "light"; // apple.com-style light default; user can toggle to dark
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
