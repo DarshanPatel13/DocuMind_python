@@ -5,7 +5,7 @@ enumerate or summarize a WHOLE document (it only ever sees k chunks). This detec
 that "aggregate" intent so the ask flow can switch to whole-document mode.
 
 Heuristic by design — explainable and dependency-free (same spirit as the
-guardrail). Java analogy: a small rules-based request classifier.
+guardrail): a small rules-based request classifier over a few regexes.
 """
 from __future__ import annotations
 

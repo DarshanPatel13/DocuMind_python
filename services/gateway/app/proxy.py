@@ -3,10 +3,8 @@
 The critical detail: `/api/ask` returns Server-Sent Events. A naive proxy that
 does `resp = await client.post(...)` would buffer the WHOLE response before
 returning — killing token-by-token streaming. So we open the upstream response
-in streaming mode and forward chunks as they arrive via `aiter_raw()`.
-
-Java analogy: Spring Cloud Gateway forwarding a reactive stream, or a manual
-`WebClient` exchange that pipes the response `Flux` straight through.
+in streaming mode and forward chunks as they arrive via `aiter_raw()`, wrapped in
+a FastAPI `StreamingResponse`.
 """
 from __future__ import annotations
 

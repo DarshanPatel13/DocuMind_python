@@ -11,8 +11,8 @@ torch-free. Set `RERANKER=cross-encoder` to load a sentence-transformers
 cross-encoder. Cohere's rerank API is a lighter production alternative (no local
 torch) — noted in docs/ai/rag-architecture.md.
 
-Java analogy: a Strategy interface (`Reranker`) with swappable implementations,
-chosen by config — like wiring a different `@Qualifier` bean.
+This is the Strategy pattern: a `Reranker` `Protocol` with swappable
+implementations selected by the `RERANKER` config value.
 """
 from __future__ import annotations
 

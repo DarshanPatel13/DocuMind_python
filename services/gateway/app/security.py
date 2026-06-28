@@ -3,8 +3,7 @@
 Kept tiny and dependency-light on purpose so it's easy to explain:
 - bcrypt: salted, slow-by-design password hashing (never store plaintext).
 - JWT: a signed token the gateway can verify statelessly on every request —
-  no session store needed. Java analogy: Spring Security's BCryptPasswordEncoder
-  + a JWT filter.
+  no session store needed.
 """
 from __future__ import annotations
 

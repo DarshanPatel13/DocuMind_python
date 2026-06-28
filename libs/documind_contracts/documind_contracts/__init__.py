@@ -3,9 +3,9 @@
 The single source of truth for everything that crosses a service boundary:
 Kafka event payloads and the request/response DTOs every service agrees on.
 
-Java analogy: this is the equivalent of a shared `*-api` / `*-contracts` Maven
-module that your producer and consumer services both depend on, so the message
-shape can never silently drift between them.
+Packaged as a standalone installable library that every service depends on (an
+`*-api`/`*-contracts` distribution), so the payload shape can never silently
+drift between producers and consumers.
 """
 from documind_contracts.events import DocumentUploadedEvent
 from documind_contracts.schemas import (

@@ -7,8 +7,8 @@ Each provider gets its OWN collection (e.g. documind_openai vs documind_ollama),
 so you can flip back and forth without the 1536-d/768-d dimension clash and
 without re-indexing. Any field can still be overridden explicitly via env.
 
-Java analogy: a shared `@ConfigurationProperties` with Spring profiles — pick the
-profile, get its defaults, override individual properties when you need to.
+The model is a frozen `pydantic-settings` object built once at import; the
+per-provider defaults are derived in a `model_validator` (see below).
 """
 from __future__ import annotations
 

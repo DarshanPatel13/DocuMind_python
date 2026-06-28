@@ -5,9 +5,6 @@ Runs as a background asyncio task started in the FastAPI lifespan. Policy:
 document FAILED and publish the original event to the DLT. Offsets are
 committed manually only after a message is fully handled (success OR routed to
 the DLT), so nothing is silently dropped.
-
-Java analogy: a `@KafkaListener` with a SeekToCurrentErrorHandler + a
-DeadLetterPublishingRecoverer — same at-least-once + DLT semantics.
 """
 from __future__ import annotations
 
@@ -31,7 +28,7 @@ MAX_RETRIES = 3
 
 
 class IngestionConsumer:
-    """Background Kafka listener that drives ingestion (Spring `@KafkaListener`).
+    """Background Kafka listener that drives ingestion (the consumer layer).
 
     `start()` opens the consumer and spawns an asyncio task that loops over
     messages; each one is handed to `_handle` (retry-with-backoff, then DLT on
