@@ -35,6 +35,14 @@ def _sse(data: dict) -> str:
 
 
 class AskService:
+    """The RAG ask use-case (service layer / Spring `@Service`).
+
+    One public coroutine, `answer_stream`, runs the whole pipeline for a question:
+    guardrail check -> choose retrieval strategy -> gather context chunks -> build a
+    grounded prompt -> stream the LLM's tokens out as SSE -> persist the turn. The
+    chat model is injectable (constructor arg) so tests can pass a fake instead of
+    calling a real LLM."""
+
     def __init__(self, chat_model=None, top_k: int | None = None) -> None:
         self._chat_model = chat_model            # injectable for tests
         self.top_k = top_k or settings.top_k

@@ -3,6 +3,12 @@
 A translation layer. Everything in this project maps to something you already
 know from Spring Boot — here's the dictionary, with the file to look at.
 
+> **"Where are the `service` / `repository` / `util` packages?"** Python expresses
+> each layer as a **module** (`service.py`, `vector_store.py`) rather than a
+> **folder of one-class files** — that's the idiomatic prod convention. The full
+> file-by-file layer map is in
+> [`docs/architecture/code-structure.md`](architecture/code-structure.md).
+
 ## Backend (Python ≈ Spring Boot)
 
 | DocuMind (Python) | Spring / Java equivalent | Where |

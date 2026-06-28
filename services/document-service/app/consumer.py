@@ -31,6 +31,13 @@ MAX_RETRIES = 3
 
 
 class IngestionConsumer:
+    """Background Kafka listener that drives ingestion (Spring `@KafkaListener`).
+
+    `start()` opens the consumer and spawns an asyncio task that loops over
+    messages; each one is handed to `_handle` (retry-with-backoff, then DLT on
+    final failure) and the offset is committed only after it's fully dealt with.
+    `stop()` cancels the task and closes the consumer on shutdown."""
+
     def __init__(self) -> None:
         self._consumer: AIOKafkaConsumer | None = None
         self._task: asyncio.Task[None] | None = None

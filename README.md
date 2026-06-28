@@ -129,7 +129,8 @@ forth never needs a re-index):
 | `ollama` | llama3.2:3b | nomic-embed-text | **free / offline** |
 
 Then `docker compose up -d document-service query-service`. Any field is still
-overridable (e.g. `CHAT_MODEL=llama3.2:1b` for low-RAM boxes). Details:
+overridable (e.g. `CHAT_MODEL=qwen2.5:1.5b` for low-RAM boxes — fits the full stack
+in a ~3.66 GB Docker cap). Details:
 [`docs/ai/local-ollama.md`](docs/ai/local-ollama.md).
 
 ## AI / LLM engineering
@@ -158,6 +159,7 @@ Full AI docs: [`docs/ai/`](docs/ai/).
 | [`docs/architecture/container.md`](docs/architecture/container.md) | C4 diagram + request flows |
 | [`docs/adr/0001-microservices-split.md`](docs/adr/0001-microservices-split.md) | why the split, trade-offs, deferred work |
 | [`docs/for-java-devs.md`](docs/for-java-devs.md) | Python/React/AI ↔ Spring/Java glossary |
+| [`docs/architecture/code-structure.md`](docs/architecture/code-structure.md) | **where each file lives + its Spring layer** (read if "why no service/repo folders?") |
 | [`docs/ai/`](docs/ai/) | RAG architecture, evaluation, observability, guardrails |
 | [`docs/interview/cheatsheet.md`](docs/interview/cheatsheet.md) | Q&A grounded in this code |
 | [`docs/runbook.md`](docs/runbook.md) | run it, demo script, failure drill, trace how-to |
