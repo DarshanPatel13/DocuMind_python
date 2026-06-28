@@ -24,7 +24,8 @@ class CommonSettings(BaseSettings):
     openai_api_key: str = "sk-missing"
     openai_base_url: str | None = None
     anthropic_api_key: str = ""
-    llm_provider: str = "openai"          # "openai" | "anthropic" (chat only)
+    ollama_base_url: str = "http://localhost:11434"   # free local provider (Docker)
+    llm_provider: str = "openai"          # "openai" | "anthropic" (chat) | "ollama" (local)
     chat_model: str = "gpt-4o-mini"
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 1536

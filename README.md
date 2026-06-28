@@ -105,11 +105,13 @@ cd services/query-service    && pytest      # grounding, retrieval
 cd frontend                  && npm test    # Vitest + RTL
 ```
 
-## Switching the chat model to Claude
-Embeddings stay on OpenAI (Anthropic has no embeddings API); the chat model swaps
-with zero code changes. In `.env`: `LLM_PROVIDER=anthropic`,
-`CHAT_MODEL=claude-sonnet-4-6`, `ANTHROPIC_API_KEY=...`, add `langchain-anthropic`
-to `services/query-service/requirements.txt`, and rebuild.
+## Switching the LLM provider
+The LLM layer is provider-pluggable via `LLM_PROVIDER`:
+- **OpenAI** (default) — set `OPENAI_API_KEY`.
+- **Anthropic Claude** (chat) — `LLM_PROVIDER=anthropic`, `CHAT_MODEL=claude-sonnet-4-6`,
+  `ANTHROPIC_API_KEY=…`, add `langchain-anthropic`; embeddings stay on OpenAI.
+- **Ollama** — **free, fully local, no API key.** `make ollama-up`, then enable the
+  Ollama block in `.env`. See [`docs/ai/local-ollama.md`](docs/ai/local-ollama.md).
 
 ## AI / LLM engineering
 - **Hybrid retrieval** (pgvector + Postgres full-text) fused with Reciprocal Rank

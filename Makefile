@@ -41,3 +41,9 @@ eval: ## RAG eval (retrieval + Ragas). Needs OPENAI_API_KEY exported + `make up`
 observability: ## Start Langfuse (LLM tracing) at http://localhost:3000
 	$(COMPOSE) --profile observability up -d langfuse langfuse-db
 	@echo "Langfuse  http://localhost:3000  — create a project, copy keys into .env, restart query-service"
+
+ollama-up: ## Free local LLM: start Ollama + pull the default models, then see docs/ai/local-ollama.md
+	$(COMPOSE) --profile ollama up -d ollama
+	$(COMPOSE) exec ollama ollama pull llama3.2:3b
+	$(COMPOSE) exec ollama ollama pull nomic-embed-text
+	@echo "Ollama ready. Set the LLM_PROVIDER=ollama block in .env, then: docker compose up -d --no-deps document-service query-service"
