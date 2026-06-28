@@ -13,8 +13,7 @@ DocuMind has two layers of defence against the model misbehaving:
 
 Heuristics are deliberately simple and explainable. They are a first filter, not
 a complete defence — a stronger setup adds output checks and an LLM-based
-classifier (noted in docs/ai/guardrails.md). Java analogy: a request-validation
-filter that rejects malicious payloads before they hit the controller.
+classifier (noted in docs/ai/guardrails.md).
 """
 from __future__ import annotations
 

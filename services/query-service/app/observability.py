@@ -7,8 +7,7 @@ any observability backend; you opt in by starting Langfuse and setting keys.
 
 Why callbacks: LangChain runs emit lifecycle events (on_llm_start/-end, …).
 Langfuse's handler subscribes to them, so we get traces without changing the
-ask logic — we just pass the handler in the call's `config`. Java analogy: a
-Micrometer/OpenTelemetry tracing interceptor you register once and forget.
+ask logic — we just pass the handler in the call's `config`.
 """
 from __future__ import annotations
 

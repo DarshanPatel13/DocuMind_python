@@ -2,8 +2,7 @@
 
 Why Redis (not slowapi's in-memory counter): the limit must hold across multiple
 gateway replicas. A counter in process memory resets per replica and per restart;
-a shared Redis counter is correct under horizontal scaling. Java analogy:
-Bucket4j backed by Redis instead of a local in-memory bucket.
+a shared Redis counter is correct under horizontal scaling.
 
 Algorithm (fixed window): one key per (user, minute), INCR it, set a 60s TTL on
 first write, reject when it exceeds the limit. Simple and good enough here; a

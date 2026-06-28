@@ -159,9 +159,10 @@ Full AI docs: [`docs/ai/`](docs/ai/).
 | [`docs/architecture/container.md`](docs/architecture/container.md) | C4 diagram + request flows |
 | [`docs/adr/0001-microservices-split.md`](docs/adr/0001-microservices-split.md) | why the split, trade-offs, deferred work |
 | [`docs/for-java-devs.md`](docs/for-java-devs.md) | Python/React/AI ↔ Spring/Java glossary |
-| [`docs/architecture/code-structure.md`](docs/architecture/code-structure.md) | **where each file lives + its Spring layer** (read if "why no service/repo folders?") |
+| [`docs/architecture/code-structure.md`](docs/architecture/code-structure.md) | **where each file lives** + the layer it belongs to (answers "why no service/repo folders?") |
 | [`docs/ai/`](docs/ai/) | RAG architecture, evaluation, observability, guardrails |
 | [`docs/interview/cheatsheet.md`](docs/interview/cheatsheet.md) | Q&A grounded in this code |
+| [`docs/interview/python-deep-dive.md`](docs/interview/python-deep-dive.md) | **Python-specific** rehearsal: async/event-loop, streaming, packaging, trade-offs |
 | [`docs/runbook.md`](docs/runbook.md) | run it, demo script, failure drill, trace how-to |
 
 ## Deferred (deliberate next steps)

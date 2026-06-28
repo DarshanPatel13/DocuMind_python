@@ -13,8 +13,8 @@ with `docker compose logs | grep <request_id>`.
 
 Why a pure-ASGI middleware (not BaseHTTPMiddleware): it runs in the *same* async
 context as the endpoint, so contextvars bound here reliably propagate down to the
-handlers and the LLM call. Java analogy: an MDC filter putting a `traceId` into
-the logging context — exactly what Spring Sleuth / Micrometer Tracing do.
+handlers and the LLM call (a `BaseHTTPMiddleware` runs in a separate context and
+the binding would not reliably reach the handler).
 """
 from __future__ import annotations
 

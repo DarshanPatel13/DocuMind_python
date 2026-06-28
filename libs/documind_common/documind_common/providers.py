@@ -2,8 +2,10 @@
 
 Callers import only `get_chat_model()` and `get_embeddings()` and never reference
 a concrete provider class — so switching the chat model is a config change
-(LLM_PROVIDER) plus one dependency, with zero changes elsewhere. This is the
-LangChain equivalent of Spring AI's `ChatModel`/`EmbeddingModel` interfaces.
+(LLM_PROVIDER) plus one dependency, with zero changes elsewhere. These two
+functions are the abstraction seam: the rest of the code depends only on the
+returned LangChain `BaseChatModel` / `Embeddings` interfaces, never on a vendor
+class like `ChatOpenAI` or `ChatOllama`.
 """
 from __future__ import annotations
 

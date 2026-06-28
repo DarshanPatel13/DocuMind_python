@@ -35,7 +35,7 @@ def _sse(data: dict) -> str:
 
 
 class AskService:
-    """The RAG ask use-case (service layer / Spring `@Service`).
+    """The RAG ask use-case — the service layer behind the /api/ask endpoint.
 
     One public coroutine, `answer_stream`, runs the whole pipeline for a question:
     guardrail check -> choose retrieval strategy -> gather context chunks -> build a

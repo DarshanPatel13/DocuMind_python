@@ -13,10 +13,6 @@ Why hybrid: dense vectors are great at meaning but miss rare exact tokens (IDs,
 codes, names); keyword search nails those but misses paraphrases. Fusing both is
 consistently better than either alone — the before/after is measured in
 `eval/` (see docs/ai/evaluation.md).
-
-Java analogy: think of this as composing two Spring Data queries (a vector
-similarity query + a full-text query) and merging the result pages with a
-fusion ranker.
 """
 from __future__ import annotations
 
