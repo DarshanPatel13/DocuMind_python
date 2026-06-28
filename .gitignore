@@ -25,6 +25,7 @@ eval/results/
 .env
 backend/.env
 frontend/.env
+*.bak
 
 # ---- Runtime data: uploaded PDFs are never committed ----
 storage/
