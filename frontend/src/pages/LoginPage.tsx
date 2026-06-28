@@ -1,10 +1,16 @@
-import { Sparkles } from "lucide-react";
+import { FileText, Lock, Sparkles } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { useAuth } from "../auth/AuthContext";
+
+const FEATURES = [
+  { icon: Sparkles, label: "Grounded answers" },
+  { icon: FileText, label: "Cited sources" },
+  { icon: Lock, label: "Private & local" },
+];
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -27,25 +33,21 @@ export function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
-      {/* Ambient gradient wash */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-[-10%] h-[480px] w-[480px] -translate-x-1/2 rounded-full bg-primary/20 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[10%] h-[360px] w-[360px] rounded-full bg-primary/10 blur-[120px]" />
-      </div>
-
-      <div className="w-full max-w-[400px] animate-rise">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary/70 shadow-glow">
-            <Sparkles className="h-7 w-7 text-primary-foreground" />
+    <div className="flex min-h-screen items-center justify-center px-4 py-16">
+      <div className="w-full max-w-[420px] animate-rise">
+        <div className="mb-9 text-center">
+          <div className="mx-auto mb-7 grid h-16 w-16 animate-float place-items-center rounded-[1.25rem] brand-gradient shadow-glow-lg">
+            <Sparkles className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-[28px] font-semibold tracking-tight">Welcome to DocuMind</h1>
-          <p className="mt-1.5 text-[15px] text-muted-foreground">
-            Ask anything about your documents.
+          <h1 className="text-balance text-5xl font-semibold leading-[1.05] tracking-tight">
+            Ask your <span className="text-gradient">documents</span> anything.
+          </h1>
+          <p className="mx-auto mt-4 max-w-sm text-[17px] leading-relaxed text-muted-foreground">
+            Upload a PDF and get instant, grounded answers — with citations you can trust.
           </p>
         </div>
 
-        <div className="rounded-3xl border bg-card/80 p-7 shadow-card backdrop-blur-xl">
+        <div className="glass rounded-3xl p-7 shadow-card">
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Username</label>
@@ -53,7 +55,7 @@ export function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
-                className="h-11"
+                className="h-12 bg-background/40"
               />
             </div>
             <div className="space-y-1.5">
@@ -63,18 +65,27 @@ export function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                className="h-11"
+                className="h-12 bg-background/40"
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={busy} size="lg" className="w-full">
+            <Button type="submit" disabled={busy} size="lg" className="h-12 w-full text-[15px] shadow-glow">
               {busy ? "Signing in…" : "Sign in"}
             </Button>
           </form>
         </div>
 
-        <p className="mt-5 text-center text-[13px] text-muted-foreground">
-          Demo access — <span className="font-medium text-foreground">demo</span> /{" "}
+        <div className="mt-7 flex items-center justify-center gap-x-5 gap-y-2 text-[13px] text-muted-foreground">
+          {FEATURES.map(({ icon: Icon, label }) => (
+            <span key={label} className="flex items-center gap-1.5">
+              <Icon className="h-3.5 w-3.5 text-primary" />
+              {label}
+            </span>
+          ))}
+        </div>
+
+        <p className="mt-6 text-center text-[13px] text-muted-foreground/80">
+          Demo — <span className="font-medium text-foreground">demo</span> /{" "}
           <span className="font-medium text-foreground">demo12345</span>
         </p>
       </div>

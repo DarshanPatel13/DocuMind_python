@@ -1,4 +1,4 @@
-import { FileText, MessagesSquare } from "lucide-react";
+import { FileText, MessagesSquare, Sparkles } from "lucide-react";
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -31,9 +31,9 @@ function NavTab({ to, label, icon }: { to: string; label: string; icon: React.Re
 
 function Brand() {
   return (
-    <span className="flex items-center gap-2 text-[17px] font-semibold tracking-tight">
-      <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-[15px] font-bold text-primary-foreground shadow-glow">
-        D
+    <span className="flex items-center gap-2.5 text-[17px] font-semibold tracking-tight">
+      <span className="grid h-8 w-8 place-items-center rounded-xl brand-gradient shadow-glow">
+        <Sparkles className="h-4 w-4 text-white" />
       </span>
       DocuMind
     </span>
@@ -56,8 +56,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-border/70 bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/55">
-        <div className="container flex h-14 items-center justify-between">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/60 backdrop-blur-xl">
+        <div className="container flex h-16 items-center justify-between">
           <Brand />
           <div className="flex items-center gap-2">
             <nav className="flex items-center gap-1 rounded-full bg-secondary/70 p-1">

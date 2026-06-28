@@ -39,20 +39,26 @@ export default {
         "3xl": "calc(var(--radius) + 14px)",
       },
       boxShadow: {
-        soft: "0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -8px rgb(0 0 0 / 0.10)",
-        card: "0 1px 3px rgb(0 0 0 / 0.05), 0 12px 40px -12px rgb(0 0 0 / 0.12)",
-        glow: "0 8px 30px -6px hsl(var(--primary) / 0.35)",
+        soft: "0 1px 2px rgb(0 0 0 / 0.04), 0 10px 30px -12px rgb(0 0 0 / 0.18)",
+        card: "0 1px 3px rgb(0 0 0 / 0.06), 0 24px 60px -20px rgb(0 0 0 / 0.28)",
+        glow: "0 10px 40px -8px hsl(var(--primary) / 0.45)",
+        "glow-lg": "0 20px 70px -16px hsl(var(--primary) / 0.55)",
       },
       keyframes: {
-        "rise": {
-          from: { opacity: "0", transform: "translateY(8px)" },
+        rise: {
+          from: { opacity: "0", transform: "translateY(12px)" },
           to: { opacity: "1", transform: "translateY(0)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
         },
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
         "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
       },
       animation: {
-        rise: "rise 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+        rise: "rise 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+        float: "float 6s ease-in-out infinite",
       },
     },
   },

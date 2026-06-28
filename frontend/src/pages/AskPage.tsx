@@ -45,7 +45,7 @@ export function AskPage() {
 
       <div className="flex-1 space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <h1 className="text-3xl font-semibold tracking-tight">Ask</h1>
+          <h1 className="text-4xl font-semibold tracking-tight">Ask</h1>
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             Scope
             <select
@@ -76,7 +76,7 @@ export function AskPage() {
             )}
             <div className="space-y-4">
               {history.data?.turns.map((turn, i) => (
-                <Card key={i} className="rounded-2xl shadow-soft">
+                <Card key={i} className="rounded-3xl border-border/60 bg-card/60 shadow-soft backdrop-blur-xl">
                   <CardContent className="p-5">
                     <p className="font-medium">Q: {turn.question}</p>
                     <p className="mt-1.5 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/90">

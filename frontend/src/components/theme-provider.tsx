@@ -22,7 +22,7 @@ const ThemeContext = createContext<ThemeState | null>(null);
 function initialTheme(): Theme {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "dark"; // dark-first for the premium default; user can toggle
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

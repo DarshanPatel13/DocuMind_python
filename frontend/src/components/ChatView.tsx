@@ -11,9 +11,7 @@ import { useAsk } from "../hooks/useAsk";
 import { CitationChip } from "./CitationChip";
 
 interface ChatViewProps {
-  /** When set, scopes the question to a single document. */
   documentId?: string;
-  /** Called whenever the backend assigns/continues a conversation id. */
   onConversationId?: (id: string) => void;
 }
 
@@ -53,13 +51,14 @@ export function ChatView({ documentId, onConversationId }: ChatViewProps) {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="Ask a question about your documents…"
-          className="h-12 rounded-full px-5 text-[15px] shadow-soft"
+          className="h-14 rounded-2xl border-border/60 bg-card/50 px-5 text-base shadow-soft backdrop-blur"
         />
         <Button
           type="submit"
           size="lg"
           disabled={isStreaming || question.trim().length === 0}
           aria-label="Ask"
+          className="h-14 rounded-2xl px-6 shadow-glow"
         >
           {isStreaming ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -79,14 +78,16 @@ export function ChatView({ documentId, onConversationId }: ChatViewProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center gap-4 rounded-3xl border border-dashed py-14 text-center"
+            className="flex flex-col items-center gap-5 rounded-3xl border border-border/60 bg-card/40 py-16 text-center backdrop-blur-xl"
           >
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-secondary text-primary">
-              <Sparkles className="h-6 w-6" />
+            <div className="grid h-16 w-16 animate-float place-items-center rounded-2xl brand-gradient text-white shadow-glow-lg">
+              <Sparkles className="h-8 w-8" />
             </div>
             <div>
-              <p className="text-[17px] font-medium">Ask anything about your documents</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-xl font-semibold tracking-tight">
+                Ask anything about your documents
+              </p>
+              <p className="mt-1.5 text-muted-foreground">
                 Answers are grounded in your files, with citations.
               </p>
             </div>
@@ -99,7 +100,7 @@ export function ChatView({ documentId, onConversationId }: ChatViewProps) {
                     setQuestion(ex);
                     submit(ex);
                   }}
-                  className="rounded-full border bg-card px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                  className="rounded-full border bg-background/50 px-4 py-2 text-sm text-muted-foreground backdrop-blur transition-colors hover:border-primary/50 hover:text-foreground"
                 >
                   {ex}
                 </button>
@@ -109,13 +110,13 @@ export function ChatView({ documentId, onConversationId }: ChatViewProps) {
         ) : (answer || isStreaming) ? (
           <motion.div
             key="answer"
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <Card className="rounded-2xl shadow-card">
-              <CardContent className="p-5">
+            <Card className="rounded-3xl border-border/60 bg-card/60 shadow-card backdrop-blur-xl">
+              <CardContent className="p-6">
                 {showSkeleton ? (
                   <div className="space-y-2.5">
                     <Skeleton className="h-4 w-3/4" />
@@ -129,7 +130,7 @@ export function ChatView({ documentId, onConversationId }: ChatViewProps) {
                   </p>
                 )}
                 {citations.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+                  <div className="mt-4 flex flex-wrap gap-2 border-t border-border/60 pt-4">
                     {citations.map((c) => (
                       <CitationChip key={`${c.filename}-${c.chunk_index}`} citation={c} />
                     ))}

@@ -2,53 +2,62 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Design tokens — a restrained, Apple-like system: cool near-whites, a single
-   confident blue accent (#0071e3), hairline borders, generous radii. Components
-   reference these via Tailwind, so flipping `.dark` reskins the whole app. */
+/* ============================================================
+   DocuMind design system — premium, dark-first, AI-product feel.
+   Vibrant blue→indigo→purple gradient, ambient glows, glass depth.
+   ============================================================ */
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 240 6% 10%;            /* ~#1d1d1f Apple ink */
+    --foreground: 240 10% 8%;
     --card: 0 0% 100%;
-    --card-foreground: 240 6% 10%;
+    --card-foreground: 240 10% 8%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 6% 10%;
-    --primary: 211 100% 45%;             /* #0071e3 */
+    --popover-foreground: 240 10% 8%;
+    --primary: 222 89% 55%;
     --primary-foreground: 0 0% 100%;
     --secondary: 240 5% 96%;
-    --secondary-foreground: 240 6% 10%;
+    --secondary-foreground: 240 10% 8%;
     --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 6% 10%;
+    --muted-foreground: 240 4% 44%;
+    --accent: 240 5% 95%;
+    --accent-foreground: 240 10% 8%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
     --border: 240 6% 90%;
     --input: 240 6% 88%;
-    --ring: 211 100% 45%;
-    --radius: 0.875rem;
+    --ring: 222 89% 55%;
+    --radius: 1rem;
+
+    /* ambient glow blobs */
+    --glow-a: 222 90% 56%;
+    --glow-b: 265 85% 60%;
+    --glow-c: 330 88% 62%;
+    --glow-strength: 0.10;
   }
 
   .dark {
-    --background: 240 6% 6%;             /* near-black, slightly cool */
-    --foreground: 240 9% 96%;
-    --card: 240 6% 9%;
-    --card-foreground: 240 9% 96%;
-    --popover: 240 6% 9%;
-    --popover-foreground: 240 9% 96%;
-    --primary: 211 100% 60%;            /* brighter blue on dark */
-    --primary-foreground: 240 6% 6%;
-    --secondary: 240 5% 14%;
-    --secondary-foreground: 240 9% 96%;
-    --muted: 240 5% 14%;
-    --muted-foreground: 240 5% 62%;
-    --accent: 240 5% 16%;
-    --accent-foreground: 240 9% 96%;
-    --destructive: 0 63% 50%;
+    --background: 240 12% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 7%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 217 92% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 13%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 6% 13%;
+    --muted-foreground: 240 5% 60%;
+    --accent: 240 6% 16%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 5% 18%;
-    --input: 240 5% 20%;
-    --ring: 211 100% 60%;
+    --border: 240 6% 16%;
+    --input: 240 6% 18%;
+    --ring: 217 92% 62%;
+
+    --glow-strength: 0.22;
   }
 
   * {
@@ -63,17 +72,58 @@
   }
 
   body {
+    position: relative;
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+  }
+
+  /* Ambient gradient glows behind everything — the "AI product" wash. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -25%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(38% 34% at 12% 6%, hsl(var(--glow-a) / var(--glow-strength)), transparent 62%),
+      radial-gradient(34% 30% at 92% 4%, hsl(var(--glow-b) / var(--glow-strength)), transparent 60%),
+      radial-gradient(46% 42% at 72% 102%, hsl(var(--glow-c) / calc(var(--glow-strength) * 0.7)), transparent 62%);
+    filter: blur(24px);
   }
 
   ::selection {
-    background: hsl(var(--primary) / 0.18);
+    background: hsl(var(--primary) / 0.25);
   }
 
-  /* Tighter optical tracking on large headings, the way Apple sets type. */
-  h1, h2 {
-    letter-spacing: -0.02em;
+  h1, h2, h3 {
+    letter-spacing: -0.03em;
+  }
+}
+
+@layer utilities {
+  /* Vibrant gradient text for hero headlines. */
+  .text-gradient {
+    background-image: linear-gradient(
+      115deg,
+      hsl(217 92% 62%) 0%,
+      hsl(258 88% 66%) 48%,
+      hsl(330 90% 66%) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Frosted, layered glass surface. */
+  .glass {
+    background: hsl(var(--card) / 0.55);
+    backdrop-filter: blur(22px) saturate(1.5);
+    -webkit-backdrop-filter: blur(22px) saturate(1.5);
+    border: 1px solid hsl(var(--border) / 0.7);
+  }
+
+  .brand-gradient {
+    background-image: linear-gradient(135deg, hsl(217 92% 58%), hsl(262 84% 60%), hsl(330 88% 62%));
   }
 }

@@ -27,7 +27,7 @@ export function DocumentList() {
   }
 
   return (
-    <ul className="divide-y overflow-hidden rounded-2xl border bg-card shadow-soft">
+    <ul className="divide-y divide-border/60 overflow-hidden rounded-3xl border border-border/60 bg-card/60 shadow-soft backdrop-blur-xl">
       {data.map((doc) => (
         <li
           key={doc.id}
