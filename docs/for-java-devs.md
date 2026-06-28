@@ -29,6 +29,8 @@ know from Spring Boot — here's the dictionary, with the file to look at.
 | DocuMind | Closest analogy |
 |---|---|
 | **LangChain** providers (`get_chat_model`) | Spring AI's `ChatModel` / `EmbeddingModel` interfaces |
+| **provider profiles** (`LLM_PROVIDER` → models/dims/collection) | Spring **profiles** (`@Profile`) — pick a profile, get its config/beans |
+| **Nginx** serving the SPA (no-cache HTML) | the servlet container / static resource handler + cache headers |
 | **pgvector** similarity search | a custom JPA query, but over vectors |
 | **hybrid retrieval + RRF** | merging two `Page<>` results with a fusion ranker |
 | **cross-encoder reranker** | a scoring `Comparator` applied to candidates |

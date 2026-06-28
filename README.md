@@ -8,7 +8,9 @@ question is embedded, the most similar chunks are retrieved from
 PostgreSQL/pgvector, and the LLM answers **only** from that context — streaming
 token-by-token to a React UI with `[filename, chunk N]` citations.
 
-As of Day 1 it runs as **three independent services behind an API gateway**:
+It runs the hosted models (OpenAI/Anthropic) **or 100% free and offline on your
+own machine** (Ollama) — switched with a single environment variable. It runs as
+**three independent services behind an API gateway**:
 
 | Service | Stack | Responsibility |
 |---|---|---|
@@ -21,9 +23,9 @@ Shared code lives in two libraries: **`libs/documind_contracts`** (Pydantic
 events + DTOs) and **`libs/documind_common`** (LLM/embeddings providers + the
 pgvector store + the embedding config the writer and reader must agree on).
 
-> Coming from Java/Spring? Every component maps to something you know — see
-> [`docs/for-java-devs.md`](docs/for-java-devs.md) *(added Day 3)* and the
-> architecture decision record [`docs/adr/0001`](docs/adr/0001-microservices-split.md).
+> 📐 **Full design:** [`docs/HLD.md`](docs/HLD.md) is the complete high-level
+> design — every service, the data stores, the AI pipeline, and the UI, with
+> diagrams. Coming from Java/Spring? See [`docs/for-java-devs.md`](docs/for-java-devs.md).
 
 ## Architecture
 
@@ -37,12 +39,13 @@ container diagram and the two request flows. In short:
                       rate-limit,       │
                       SSE passthrough) ─┴─REST + SSE──▶ query-service ──▶ pgvector (read)
                                                          └──▶ MongoDB (conversation history)
-                         Redis (rate-limit)              └──▶ OpenAI (embeddings + chat)
+                         Redis (rate-limit)              └──▶ OpenAI / Ollama (embeddings + chat)
 ```
 
 ## Prerequisites
 - Docker Desktop
-- An OpenAI API key with a little credit ([platform.openai.com](https://platform.openai.com))
+- Either an OpenAI API key ([platform.openai.com](https://platform.openai.com)) **or**
+  nothing at all — run free/offline with Ollama (below).
 - (For local, non-Docker dev: Python 3.12, Node 20+)
 
 ## Quickstart — one command
@@ -58,6 +61,15 @@ docker compose up --build     # or:  make up
 
 Then: **Upload** a PDF, watch the status go `UPLOADED → PROCESSING → READY`, go to
 **Ask**, and watch a grounded answer stream in with citation chips.
+
+### …or run it free & offline (no API key)
+```bash
+make ollama-up                # starts Ollama + pulls llama3.2:3b + nomic-embed-text
+echo "LLM_PROVIDER=ollama" >> .env
+docker compose up -d document-service query-service
+```
+That one variable derives the local models, dimensions, and a dedicated vector
+collection. Details: [`docs/ai/local-ollama.md`](docs/ai/local-ollama.md).
 
 ## Make targets
 
@@ -105,13 +117,20 @@ cd services/query-service    && pytest      # grounding, retrieval
 cd frontend                  && npm test    # Vitest + RTL
 ```
 
-## Switching the LLM provider
-The LLM layer is provider-pluggable via `LLM_PROVIDER`:
-- **OpenAI** (default) — set `OPENAI_API_KEY`.
-- **Anthropic Claude** (chat) — `LLM_PROVIDER=anthropic`, `CHAT_MODEL=claude-sonnet-4-6`,
-  `ANTHROPIC_API_KEY=…`, add `langchain-anthropic`; embeddings stay on OpenAI.
-- **Ollama** — **free, fully local, no API key.** `make ollama-up`, then enable the
-  Ollama block in `.env`. See [`docs/ai/local-ollama.md`](docs/ai/local-ollama.md).
+## Switching the LLM provider (one variable)
+Set **only** `LLM_PROVIDER`; the chat model, embedding model, dimensions, and a
+**per-provider vector collection** are derived automatically (so switching back and
+forth never needs a re-index):
+
+| `LLM_PROVIDER` | Chat | Embeddings | Cost |
+|---|---|---|---|
+| `openai` *(default)* | gpt-4o-mini | text-embedding-3-small | paid |
+| `anthropic` | claude-sonnet-4-6 | OpenAI (no Anthropic embeddings) | paid |
+| `ollama` | llama3.2:3b | nomic-embed-text | **free / offline** |
+
+Then `docker compose up -d document-service query-service`. Any field is still
+overridable (e.g. `CHAT_MODEL=llama3.2:1b` for low-RAM boxes). Details:
+[`docs/ai/local-ollama.md`](docs/ai/local-ollama.md).
 
 ## AI / LLM engineering
 - **Hybrid retrieval** (pgvector + Postgres full-text) fused with Reciprocal Rank
@@ -124,8 +143,10 @@ The LLM layer is provider-pluggable via `LLM_PROVIDER`:
 Full AI docs: [`docs/ai/`](docs/ai/).
 
 ## UI & quality
-- shadcn/ui + Radix + Tailwind design system, light/dark theme, toasts, streaming
-  chat with skeletons, and citation chips that open a **source-text preview**.
+- An **apple.com-style landing page** (gradient hero, product sections, integrated
+  sign-in) plus a shadcn/ui + Radix + Tailwind app — light/dark theme, glass
+  surfaces, streaming chat with skeletons, and citation chips that open a
+  **source-text preview**.
 - **Distributed trace** via a propagated `X-Request-ID` correlation id across all
   services (see the runbook).
 - Tests: pytest (29) + Vitest/RTL (4) + a hermetic **Playwright** E2E.
@@ -133,6 +154,7 @@ Full AI docs: [`docs/ai/`](docs/ai/).
 ## Documentation
 | Doc | What |
 |---|---|
+| [`docs/HLD.md`](docs/HLD.md) | **High-level design** — everything, with diagrams (start here) |
 | [`docs/architecture/container.md`](docs/architecture/container.md) | C4 diagram + request flows |
 | [`docs/adr/0001-microservices-split.md`](docs/adr/0001-microservices-split.md) | why the split, trade-offs, deferred work |
 | [`docs/for-java-devs.md`](docs/for-java-devs.md) | Python/React/AI ↔ Spring/Java glossary |

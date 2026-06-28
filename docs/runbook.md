@@ -5,10 +5,21 @@
 cp .env.example .env          # set OPENAI_API_KEY
 make up                       # build + start everything
 ```
-- Frontend: <http://localhost:5173>  (login **demo / demo12345**)
+- Frontend: <http://localhost:5173>  (apple.com-style landing → login **demo / demo12345**)
 - Gateway API + Swagger: <http://localhost:8080/docs>
 
 Stop: `make down`. Logs: `make logs`. Tests: `make test`.
+
+## Run it free & offline (Ollama — no API key)
+```bash
+make ollama-up                              # start Ollama + pull llama3.2:3b + nomic-embed-text
+echo "LLM_PROVIDER=ollama" >> .env          # the ONLY switch you need
+docker compose up -d document-service query-service
+# (re-upload a PDF so it's embedded with the local model)
+```
+Switch back with `LLM_PROVIDER=openai` and restart — each provider keeps its own
+vector collection, so no re-index. Low on RAM? add `CHAT_MODEL=llama3.2:1b`. See
+[`ai/local-ollama.md`](ai/local-ollama.md).
 
 ## 5-minute demo script
 1. **Login** at :5173 (demo/demo12345). Toggle **dark mode** (top right).
