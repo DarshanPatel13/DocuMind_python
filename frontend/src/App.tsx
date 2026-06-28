@@ -1,4 +1,4 @@
-import { FileText, MessagesSquare } from "lucide-react";
+import { FileText, MessagesSquare, Sparkles } from "lucide-react";
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 import { useAuth } from "./auth/AuthContext";
 import { AskPage } from "./pages/AskPage";
-import { LoginPage } from "./pages/LoginPage";
+import { LandingPage } from "./pages/LandingPage";
 import { UploadPage } from "./pages/UploadPage";
 
 function NavTab({ to, label, icon }: { to: string; label: string; icon: React.ReactNode }) {
@@ -16,10 +16,10 @@ function NavTab({ to, label, icon }: { to: string; label: string; icon: React.Re
       to={to}
       className={({ isActive }) =>
         cn(
-          "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+          "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all",
           isActive
-            ? "bg-primary text-primary-foreground"
-            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+            ? "bg-card text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground",
         )
       }
     >
@@ -31,11 +31,11 @@ function NavTab({ to, label, icon }: { to: string; label: string; icon: React.Re
 
 function Brand() {
   return (
-    <span className="flex items-center gap-2 text-lg font-bold tracking-tight">
-      <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-primary-foreground">
-        D
+    <span className="flex items-center gap-2.5 text-[17px] font-semibold tracking-tight">
+      <span className="grid h-8 w-8 place-items-center rounded-xl brand-gradient shadow-glow">
+        <Sparkles className="h-4 w-4 text-white" />
       </span>
-      Docu<span className="text-primary">Mind</span>
+      DocuMind
     </span>
   );
 }
@@ -46,31 +46,36 @@ export default function App() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background text-foreground">
-        <div className="absolute right-4 top-4">
-          <ThemeToggle />
-        </div>
-        <LoginPage />
+        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/60 backdrop-blur-xl">
+          <div className="container flex h-16 items-center justify-between">
+            <Brand />
+            <ThemeToggle />
+          </div>
+        </header>
+        <LandingPage />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
-        <div className="container flex h-14 items-center justify-between">
+      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/60 backdrop-blur-xl">
+        <div className="container flex h-16 items-center justify-between">
           <Brand />
-          <nav className="flex items-center gap-1">
-            <NavTab to="/upload" label="Upload" icon={<FileText className="h-4 w-4" />} />
-            <NavTab to="/ask" label="Ask" icon={<MessagesSquare className="h-4 w-4" />} />
+          <div className="flex items-center gap-2">
+            <nav className="flex items-center gap-1 rounded-full bg-secondary/70 p-1">
+              <NavTab to="/upload" label="Upload" icon={<FileText className="h-4 w-4" />} />
+              <NavTab to="/ask" label="Ask" icon={<MessagesSquare className="h-4 w-4" />} />
+            </nav>
             <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground">
               Sign out
             </Button>
-          </nav>
+          </div>
         </div>
       </header>
 
-      <main className="container py-8">
+      <main className="container animate-rise py-10">
         <Routes>
           <Route path="/" element={<Navigate to="/upload" replace />} />
           <Route path="/upload" element={<UploadPage />} />

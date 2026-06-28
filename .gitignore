@@ -18,10 +18,14 @@ playwright-report/
 test-results/
 eval/results/
 
+# ---- Tooling run logs ----
+.codex-run/
+
 # ---- Env & secrets ----
 .env
 backend/.env
 frontend/.env
+*.bak
 
 # ---- Runtime data: uploaded PDFs are never committed ----
 storage/

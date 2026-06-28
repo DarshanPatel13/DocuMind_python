@@ -94,12 +94,14 @@ services:
       dockerfile: services/document-service/Dockerfile
     ports:
       - "8001:8001"
+    env_file:
+      - .env                    # so any override in .env (e.g. CHAT_MODEL) reaches the service
     environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # Provider switch — set LLM_PROVIDER (+ the matching key); models/dims/collection are derived.
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
-      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
-      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
-      VECTOR_COLLECTION: documind_chunks
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       POSTGRES_HOST: postgres
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       STORAGE_DIR: /data/storage
@@ -117,16 +119,15 @@ services:
       dockerfile: services/query-service/Dockerfile
     ports:
       - "8002:8002"
+    env_file:
+      - .env                    # so any override in .env (e.g. CHAT_MODEL) reaches the service
     environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      # Provider switch — set LLM_PROVIDER (+ the matching key); models/dims/collection are derived.
       LLM_PROVIDER: ${LLM_PROVIDER:-openai}
-      CHAT_MODEL: ${CHAT_MODEL:-gpt-4o-mini}
-      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
-      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      VECTOR_COLLECTION: documind_chunks
-      TOP_K: ${TOP_K:-4}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       HYBRID_ENABLED: ${HYBRID_ENABLED:-true}
       RERANKER: ${RERANKER:-none}
       POSTGRES_HOST: postgres
@@ -180,8 +181,21 @@ services:
       SALT: ${LANGFUSE_SALT:-changeme-langfuse-salt}
       TELEMETRY_ENABLED: "false"
 
+  # ---------------- Free local LLM (opt-in: --profile ollama) ----------------
+  # Runs the chat + embedding models locally, $0 and offline. Start with:
+  #   make ollama-up      (starts the server + pulls llama3.2:3b + nomic-embed-text)
+  # then set LLM_PROVIDER=ollama in .env. See docs/ai/local-ollama.md.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+
 volumes:
   pgdata:
   mongodata:
   storage:
   langfusedb:
+  ollama:

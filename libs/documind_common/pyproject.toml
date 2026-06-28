@@ -13,6 +13,7 @@ dependencies = [
     "starlette>=0.37",                  # the correlation-id ASGI middleware
     "langchain-core>=0.3,<0.4",
     "langchain-openai>=0.2,<0.4",
+    "langchain-ollama>=0.2,<0.4",       # free local provider (LLM_PROVIDER=ollama)
     "langchain-postgres>=0.0.12",
     "psycopg[binary]>=3.2",
 ]

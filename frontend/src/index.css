@@ -2,62 +2,132 @@
 @tailwind components;
 @tailwind utilities;
 
-/* shadcn/ui design tokens. Components reference these via Tailwind (e.g.
-   bg-background, text-foreground), so flipping `.dark` on <html> reskins the
-   whole app. Brand primary is DocuMind blue. */
+/* ============================================================
+   DocuMind design system — premium, dark-first, AI-product feel.
+   Vibrant blue→indigo→purple gradient, ambient glows, glass depth.
+   ============================================================ */
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 240 10% 8%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 240 10% 8%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%;
+    --popover-foreground: 240 10% 8%;
+    --primary: 222 89% 55%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 8%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 44%;
+    --accent: 240 5% 95%;
+    --accent-foreground: 240 10% 8%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
-    --radius: 0.65rem;
+    --border: 240 6% 90%;
+    --input: 240 6% 88%;
+    --ring: 222 89% 55%;
+    --radius: 1rem;
+
+    /* apple.com-style alternating section surface (light gray #f5f5f7) */
+    --surface-alt: 240 20% 97%;
+
+    /* ambient glow blobs */
+    --glow-a: 222 90% 56%;
+    --glow-b: 265 85% 60%;
+    --glow-c: 330 88% 62%;
+    --glow-strength: 0.10;
   }
 
   .dark {
-    --background: 222 47% 7%;
-    --foreground: 210 40% 96%;
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 96%;
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 96%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 96%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 96%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 96%;
-    --border: 217 33% 20%;
-    --input: 217 33% 22%;
-    --ring: 224 76% 60%;
+    --background: 240 12% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 7%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 217 92% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 13%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 6% 13%;
+    --muted-foreground: 240 5% 60%;
+    --accent: 240 6% 16%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 16%;
+    --input: 240 6% 18%;
+    --ring: 217 92% 62%;
+
+    --surface-alt: 240 8% 9%;
+    --glow-strength: 0.22;
   }
 
   * {
     border-color: hsl(var(--border));
   }
 
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
+    position: relative;
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+  }
+
+  /* Ambient gradient glows behind everything — the "AI product" wash. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -25%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(38% 34% at 12% 6%, hsl(var(--glow-a) / var(--glow-strength)), transparent 62%),
+      radial-gradient(34% 30% at 92% 4%, hsl(var(--glow-b) / var(--glow-strength)), transparent 60%),
+      radial-gradient(46% 42% at 72% 102%, hsl(var(--glow-c) / calc(var(--glow-strength) * 0.7)), transparent 62%);
+    filter: blur(24px);
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.25);
+  }
+
+  h1, h2, h3 {
+    letter-spacing: -0.03em;
+  }
+}
+
+@layer utilities {
+  /* Vibrant gradient text for hero headlines. */
+  .text-gradient {
+    background-image: linear-gradient(
+      115deg,
+      hsl(217 92% 62%) 0%,
+      hsl(258 88% 66%) 48%,
+      hsl(330 90% 66%) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Frosted, layered glass surface. */
+  .glass {
+    background: hsl(var(--card) / 0.55);
+    backdrop-filter: blur(22px) saturate(1.5);
+    -webkit-backdrop-filter: blur(22px) saturate(1.5);
+    border: 1px solid hsl(var(--border) / 0.7);
+  }
+
+  .brand-gradient {
+    background-image: linear-gradient(135deg, hsl(217 92% 58%), hsl(262 84% 60%), hsl(330 88% 62%));
   }
 }

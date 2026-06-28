@@ -61,13 +61,17 @@ export function UploadDropzone() {
           handleFile(e.dataTransfer.files?.[0]);
         }}
         className={cn(
-          "flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 text-center transition-colors",
-          dragOver ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/50",
+          "group flex cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed p-16 text-center transition-all duration-300",
+          dragOver
+            ? "scale-[1.01] border-primary bg-primary/10 shadow-glow"
+            : "glass border-border hover:border-primary/50 hover:shadow-card",
         )}
       >
-        <UploadCloud className="mb-3 h-8 w-8 text-muted-foreground" />
-        <p className="font-medium">Drag &amp; drop a PDF here</p>
-        <p className="mt-1 text-sm text-muted-foreground">or click to choose a file (max 20 MB)</p>
+        <div className="mb-5 grid h-16 w-16 place-items-center rounded-2xl brand-gradient text-white shadow-glow transition-transform duration-300 group-hover:scale-110">
+          <UploadCloud className="h-8 w-8" />
+        </div>
+        <p className="text-lg font-medium">Drag &amp; drop a PDF here</p>
+        <p className="mt-1.5 text-sm text-muted-foreground">or click to choose a file · max 20 MB</p>
         <input
           ref={inputRef}
           type="file"

@@ -15,8 +15,21 @@ from documind_common.config import settings
 
 
 def get_embeddings() -> Embeddings:
-    """Embeddings ALWAYS come from OpenAI — Anthropic has no embeddings API,
-    and every stored vector must come from the same model the queries use."""
+    """Return the embeddings model for the configured provider.
+
+    OpenAI for openai/anthropic (Anthropic has no embeddings API, so it borrows
+    OpenAI's); Ollama for the fully-local, free setup. Every stored vector must
+    come from the same model the queries use — and different models have
+    different dimensions, so switching providers needs a fresh collection
+    (see docs/ai/local-ollama.md)."""
+    if settings.llm_provider.lower() == "ollama":
+        from langchain_ollama import OllamaEmbeddings  # optional dependency
+
+        return OllamaEmbeddings(
+            model=settings.embedding_model,
+            base_url=settings.ollama_base_url,
+        )
+
     return OpenAIEmbeddings(
         model=settings.embedding_model,
         dimensions=settings.embedding_dimensions,
@@ -51,6 +64,18 @@ def get_chat_model() -> BaseChatModel:
             temperature=settings.temperature,
             streaming=True,
             api_key=settings.anthropic_api_key,
+        )
+
+    # ---- FULLY LOCAL / FREE via Ollama (no API key, runs in Docker) ----
+    # docker compose --profile ollama up -d ollama && make ollama-pull
+    # then set LLM_PROVIDER=ollama (see docs/ai/local-ollama.md).
+    if provider == "ollama":
+        from langchain_ollama import ChatOllama  # local import: optional dependency
+
+        return ChatOllama(
+            model=settings.chat_model,
+            temperature=settings.temperature,
+            base_url=settings.ollama_base_url,
         )
 
     raise ValueError(f"Unknown LLM_PROVIDER: {settings.llm_provider!r}")

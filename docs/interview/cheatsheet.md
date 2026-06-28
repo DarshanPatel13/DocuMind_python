@@ -100,6 +100,23 @@ Every LLM call is traced in Langfuse (prompt, tokens, cost, latency); rate limit
 at the gateway caps spend. Deferred (and I can speak to): semantic caching, a model
 router, agentic tool-calling — `docs/ai/next-steps.md`.
 
+**Q: Are you locked into OpenAI?**
+No — the LLM layer is profile-driven. One env var (`LLM_PROVIDER`) switches between
+OpenAI, Anthropic, and a 100%-local/free Ollama stack; the model, embeddings,
+dimensions, and a per-provider vector collection are derived, so I can flip back and
+forth with no re-index. `docs/ai/local-ollama.md`.
+
+---
+
+## Frontend / UX
+
+**Q: Walk me through the UI.**
+A React 18 + TS app with a shadcn/ui (Radix + Tailwind) design system and an
+apple.com-style marketing landing for signed-out users. CSS-variable tokens give
+instant light/dark; the chat streams tokens with a skeleton, and citation chips open
+the exact source passage. Served by Nginx with `no-cache` on `index.html` so deploys
+show immediately. Tested with Vitest + a hermetic Playwright E2E.
+
 ---
 
 ## The closer
