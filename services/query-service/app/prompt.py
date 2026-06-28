@@ -33,6 +33,16 @@ def build_context(docs: list[Document]) -> str:
     return "\n---\n".join(blocks)
 
 
-def build_messages(question: str, docs: list[Document]) -> list[BaseMessage]:
+WHOLE_DOC_NOTE = (
+    "\nThe context below is the COMPLETE document (every section, in order). When the "
+    "user asks you to list, enumerate, summarize, or give an overview, be EXHAUSTIVE: "
+    "include every relevant item and do not omit any. Do not invent items not present."
+)
+
+
+def build_messages(
+    question: str, docs: list[Document], *, whole_document: bool = False
+) -> list[BaseMessage]:
+    system = SYSTEM_PROMPT + (WHOLE_DOC_NOTE if whole_document else "")
     user = f"Context:\n{build_context(docs)}\n\nQuestion: {question}"
-    return [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=user)]
+    return [SystemMessage(content=system), HumanMessage(content=user)]

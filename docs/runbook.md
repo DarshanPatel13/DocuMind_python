@@ -18,7 +18,8 @@ docker compose up -d document-service query-service
 # (re-upload a PDF so it's embedded with the local model)
 ```
 Switch back with `LLM_PROVIDER=openai` and restart — each provider keeps its own
-vector collection, so no re-index. Low on RAM? add `CHAT_MODEL=llama3.2:1b`. See
+vector collection, so no re-index. Low on RAM? add `CHAT_MODEL=qwen2.5:1.5b`
+(fits the whole stack in ~3.66 GB). See
 [`ai/local-ollama.md`](ai/local-ollama.md).
 
 ## 5-minute demo script

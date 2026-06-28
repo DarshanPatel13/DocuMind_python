@@ -39,17 +39,27 @@ guardrails, Langfuse tracing, the Ragas eval — is identical. That's the whole
 point of the provider seam (Spring analogy: swapping a `@Qualifier` bean).
 
 ## Low on RAM? Use a smaller chat model
-The default `llama3.2:3b` needs ~3–4 GB free; alongside Postgres/Kafka/Mongo it can
-get OOM-killed (`llama-server … signal: killed`). Override with a lighter model in
-`.env` and restart query-service:
+The profile default `llama3.2:3b` needs ~3–4 GB free; on a small machine (Docker
+Desktop's WSL2 backend is often capped at ~3.66 GB) it gets OOM-killed
+(`llama-server … signal: killed`) when the full stack is also up. Override with a
+lighter model in `.env` and restart query-service:
 ```env
-CHAT_MODEL=llama3.2:1b      # ~1.3 GB; verified end-to-end on a low-RAM box
+CHAT_MODEL=qwen2.5:1.5b     # ~1 GB; RECOMMENDED — the full stack + model fit in 3.66 GB,
+                            # and it's noticeably more accurate than llama3.2:1b
+# CHAT_MODEL=llama3.2:1b    # ~1.3 GB; absolute-smallest fallback, lower quality
 ```
 ```bash
 docker compose up -d query-service
 ```
 The override flows through because the services load `.env` (`env_file`), and the
-profile only fills in what you leave blank.
+profile only fills in what you leave blank. Pull the model first if needed:
+`docker compose exec ollama ollama pull qwen2.5:1.5b`.
+
+> **Reality check (verified on a 7.7 GB laptop):** with `qwen2.5:1.5b` the whole
+> stack runs together at ~2.3 GB of the 3.66 GB cap (~1.3 GB free), ~75 s/answer
+> cold / ~15 s warm on CPU. A 3B model does **not** fit alongside all services on
+> this RAM — that's a hardware ceiling, not a config bug. For crisp answers in a
+> live demo, a cloud provider (`gpt-4o-mini` / Claude) runs outside Docker RAM.
 
 ## Honest trade-offs
 | | OpenAI (default) | Ollama (local) |

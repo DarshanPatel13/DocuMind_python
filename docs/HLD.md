@@ -323,8 +323,9 @@ overridable via env.
 
 Because each provider has its **own collection**, switching back and forth never
 hits the 1536-d↔768-d dimension clash and never needs a re-index. Services load
-`.env` (compose `env_file`), so overrides like `CHAT_MODEL=llama3.2:1b` (for
-low-RAM machines) flow straight through. Full guide: [ai/local-ollama.md](ai/local-ollama.md).
+`.env` (compose `env_file`), so overrides like `CHAT_MODEL=qwen2.5:1.5b` (the
+recommended low-RAM model — full stack + model fit a ~3.66 GB Docker cap) flow
+straight through. Full guide: [ai/local-ollama.md](ai/local-ollama.md).
 
 ---
 
