@@ -8,27 +8,26 @@ key, no network. This swaps **both** the chat model and the embeddings.
 ```bash
 make ollama-up      # starts the Ollama container + pulls llama3.2:3b + nomic-embed-text
 ```
-Then enable the local block in `.env` (it's commented in `.env.example`):
+Then set **one line** in `.env`:
 ```env
 LLM_PROVIDER=ollama
-CHAT_MODEL=llama3.2:3b
-EMBEDDING_MODEL=nomic-embed-text
-EMBEDDING_DIMENSIONS=768
-VECTOR_COLLECTION=documind_ollama
-OLLAMA_BASE_URL=http://ollama:11434
 ```
-Restart the services that talk to the LLM:
+…and restart the services that talk to the LLM:
 ```bash
-docker compose up -d --no-deps document-service query-service
+docker compose up -d document-service query-service
 ```
 Re-upload a PDF (so it's embedded with the local model) and ask away — `$0`.
 
-## Why `VECTOR_COLLECTION=documind_ollama` (the important gotcha)
-A pgvector collection has a **fixed dimension**. OpenAI `text-embedding-3-small`
-is 1536-d; `nomic-embed-text` is 768-d. You cannot mix them in one collection, so
-the local setup uses its **own collection**. Switching back to OpenAI just means
-switching the collection back (your OpenAI vectors are still there). If you ever
-need to wipe vectors entirely: `docker compose down -v`.
+That single switch derives everything else: chat model `llama3.2:3b`, embeddings
+`nomic-embed-text`, 768 dimensions, and a dedicated `documind_ollama` collection.
+To go back to OpenAI, set `LLM_PROVIDER=openai` and restart — done.
+
+## The dimension clash is handled for you
+A pgvector collection has a **fixed dimension** (OpenAI `text-embedding-3-small`
+is 1536-d; `nomic-embed-text` is 768-d), so you can't mix them. Each provider gets
+its **own collection** automatically (`documind_openai` vs `documind_ollama`, see
+`libs/documind_common/config.py`), so flipping back and forth never clashes and
+never needs a re-index. To wipe all vectors entirely: `docker compose down -v`.
 
 ## How it works (one config branch, no app changes)
 `libs/documind_common/documind_common/providers.py`:

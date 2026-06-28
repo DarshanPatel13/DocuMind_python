@@ -95,13 +95,11 @@ services:
     ports:
       - "8001:8001"
     environment:
+      # Provider switch — set LLM_PROVIDER (+ the matching key); models/dims/collection are derived.
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
-      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
-      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
-      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
-      VECTOR_COLLECTION: ${VECTOR_COLLECTION:-documind_chunks}
       POSTGRES_HOST: postgres
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       STORAGE_DIR: /data/storage
@@ -120,16 +118,12 @@ services:
     ports:
       - "8002:8002"
     environment:
+      # Provider switch — set LLM_PROVIDER (+ the matching key); models/dims/collection are derived.
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
-      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
-      CHAT_MODEL: ${CHAT_MODEL:-gpt-4o-mini}
-      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
-      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1536}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      VECTOR_COLLECTION: ${VECTOR_COLLECTION:-documind_chunks}
-      TOP_K: ${TOP_K:-4}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       HYBRID_ENABLED: ${HYBRID_ENABLED:-true}
       RERANKER: ${RERANKER:-none}
       POSTGRES_HOST: postgres
