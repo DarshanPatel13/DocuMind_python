@@ -18,6 +18,9 @@ playwright-report/
 test-results/
 eval/results/
 
+# ---- Tooling run logs ----
+.codex-run/
+
 # ---- Env & secrets ----
 .env
 backend/.env
