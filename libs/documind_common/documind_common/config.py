@@ -80,14 +80,16 @@ class CommonSettings(BaseSettings):
 
     @model_validator(mode="after")
     def _apply_provider_profile(self) -> "CommonSettings":
+        # Treat unset OR empty ("") as "use the provider profile" — empty strings
+        # are common when a compose var is passed through without a value.
         profile = _PROFILES.get(self.llm_provider.lower(), _PROFILES["openai"])
-        if self.chat_model is None:
+        if not self.chat_model:
             self.chat_model = profile["chat_model"]
-        if self.embedding_model is None:
+        if not self.embedding_model:
             self.embedding_model = profile["embedding_model"]
-        if self.embedding_dimensions is None:
+        if not self.embedding_dimensions:
             self.embedding_dimensions = profile["embedding_dimensions"]
-        if self.vector_collection is None:
+        if not self.vector_collection:
             self.vector_collection = profile["vector_collection"]
         return self
 

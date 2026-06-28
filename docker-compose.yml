@@ -94,6 +94,8 @@ services:
       dockerfile: services/document-service/Dockerfile
     ports:
       - "8001:8001"
+    env_file:
+      - .env                    # so any override in .env (e.g. CHAT_MODEL) reaches the service
     environment:
       # Provider switch — set LLM_PROVIDER (+ the matching key); models/dims/collection are derived.
       LLM_PROVIDER: ${LLM_PROVIDER:-openai}
@@ -117,6 +119,8 @@ services:
       dockerfile: services/query-service/Dockerfile
     ports:
       - "8002:8002"
+    env_file:
+      - .env                    # so any override in .env (e.g. CHAT_MODEL) reaches the service
     environment:
       # Provider switch — set LLM_PROVIDER (+ the matching key); models/dims/collection are derived.
       LLM_PROVIDER: ${LLM_PROVIDER:-openai}

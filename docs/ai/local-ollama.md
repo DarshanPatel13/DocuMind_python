@@ -38,6 +38,19 @@ Everything downstream — hybrid retrieval, the grounded prompt, SSE streaming,
 guardrails, Langfuse tracing, the Ragas eval — is identical. That's the whole
 point of the provider seam (Spring analogy: swapping a `@Qualifier` bean).
 
+## Low on RAM? Use a smaller chat model
+The default `llama3.2:3b` needs ~3–4 GB free; alongside Postgres/Kafka/Mongo it can
+get OOM-killed (`llama-server … signal: killed`). Override with a lighter model in
+`.env` and restart query-service:
+```env
+CHAT_MODEL=llama3.2:1b      # ~1.3 GB; verified end-to-end on a low-RAM box
+```
+```bash
+docker compose up -d query-service
+```
+The override flows through because the services load `.env` (`env_file`), and the
+profile only fills in what you leave blank.
+
 ## Honest trade-offs
 | | OpenAI (default) | Ollama (local) |
 |---|---|---|
