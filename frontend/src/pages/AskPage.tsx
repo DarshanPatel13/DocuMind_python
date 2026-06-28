@@ -36,7 +36,7 @@ export function AskPage() {
   const readyDocs = (documents ?? []).filter((d) => d.status === "READY");
 
   return (
-    <div className="mx-auto flex max-w-5xl gap-8">
+    <div className="mx-auto flex max-w-5xl gap-10">
       <HistorySidebar
         conversationIds={conversationIds}
         selectedId={historyId}
@@ -44,14 +44,14 @@ export function AskPage() {
       />
 
       <div className="flex-1 space-y-6">
-        <div>
-          <h1 className="mb-1 text-2xl font-semibold tracking-tight">Ask</h1>
-          <label className="text-sm text-muted-foreground">
-            Scope:{" "}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h1 className="text-3xl font-semibold tracking-tight">Ask</h1>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            Scope
             <select
               value={selectedDoc}
               onChange={(e) => setSelectedDoc(e.target.value)}
-              className="ml-1 rounded-md border border-input bg-background px-2 py-1 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="rounded-full border border-input bg-card px-3.5 py-1.5 text-foreground shadow-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">All documents</option>
               {readyDocs.map((d) => (
@@ -66,7 +66,7 @@ export function AskPage() {
         <ChatView documentId={selectedDoc || undefined} onConversationId={rememberConversation} />
 
         {historyId && (
-          <section className="border-t pt-4">
+          <section className="border-t pt-6">
             <h2 className="mb-3 text-lg font-semibold tracking-tight">
               History · {historyId.slice(0, 8)}…
             </h2>
@@ -76,12 +76,14 @@ export function AskPage() {
             )}
             <div className="space-y-4">
               {history.data?.turns.map((turn, i) => (
-                <Card key={i}>
-                  <CardContent className="p-4">
+                <Card key={i} className="rounded-2xl shadow-soft">
+                  <CardContent className="p-5">
                     <p className="font-medium">Q: {turn.question}</p>
-                    <p className="mt-1 whitespace-pre-wrap text-foreground/90">{turn.answer}</p>
+                    <p className="mt-1.5 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/90">
+                      {turn.answer}
+                    </p>
                     {turn.citations.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="mt-3 flex flex-wrap gap-2">
                         {turn.citations.map((c, j) => (
                           <CitationChip key={j} citation={c} />
                         ))}

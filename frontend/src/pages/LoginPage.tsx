@@ -1,7 +1,7 @@
+import { Sparkles } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 import { useAuth } from "../auth/AuthContext";
@@ -27,15 +27,25 @@ export function LoginPage() {
   }
 
   return (
-    <div className="mx-auto mt-24 max-w-sm px-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">
-            Docu<span className="text-primary">Mind</span>
-          </CardTitle>
-          <CardDescription>Sign in to continue. (demo / demo12345)</CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+      {/* Ambient gradient wash */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute left-1/2 top-[-10%] h-[480px] w-[480px] -translate-x-1/2 rounded-full bg-primary/20 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[10%] h-[360px] w-[360px] rounded-full bg-primary/10 blur-[120px]" />
+      </div>
+
+      <div className="w-full max-w-[400px] animate-rise">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary/70 shadow-glow">
+            <Sparkles className="h-7 w-7 text-primary-foreground" />
+          </div>
+          <h1 className="text-[28px] font-semibold tracking-tight">Welcome to DocuMind</h1>
+          <p className="mt-1.5 text-[15px] text-muted-foreground">
+            Ask anything about your documents.
+          </p>
+        </div>
+
+        <div className="rounded-3xl border bg-card/80 p-7 shadow-card backdrop-blur-xl">
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Username</label>
@@ -43,6 +53,7 @@ export function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
+                className="h-11"
               />
             </div>
             <div className="space-y-1.5">
@@ -52,15 +63,21 @@ export function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
+                className="h-11"
               />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={busy} className="w-full">
+            <Button type="submit" disabled={busy} size="lg" className="w-full">
               {busy ? "Signing in…" : "Sign in"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+
+        <p className="mt-5 text-center text-[13px] text-muted-foreground">
+          Demo access — <span className="font-medium text-foreground">demo</span> /{" "}
+          <span className="font-medium text-foreground">demo12345</span>
+        </p>
+      </div>
     </div>
   );
 }

@@ -16,10 +16,10 @@ function NavTab({ to, label, icon }: { to: string; label: string; icon: React.Re
       to={to}
       className={({ isActive }) =>
         cn(
-          "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+          "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all",
           isActive
-            ? "bg-primary text-primary-foreground"
-            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+            ? "bg-card text-foreground shadow-sm"
+            : "text-muted-foreground hover:text-foreground",
         )
       }
     >
@@ -31,11 +31,11 @@ function NavTab({ to, label, icon }: { to: string; label: string; icon: React.Re
 
 function Brand() {
   return (
-    <span className="flex items-center gap-2 text-lg font-bold tracking-tight">
-      <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-primary-foreground">
+    <span className="flex items-center gap-2 text-[17px] font-semibold tracking-tight">
+      <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary/70 text-[15px] font-bold text-primary-foreground shadow-glow">
         D
       </span>
-      Docu<span className="text-primary">Mind</span>
+      DocuMind
     </span>
   );
 }
@@ -46,7 +46,7 @@ export default function App() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background text-foreground">
-        <div className="absolute right-4 top-4">
+        <div className="absolute right-5 top-5 z-10">
           <ThemeToggle />
         </div>
         <LoginPage />
@@ -56,21 +56,23 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-border/70 bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/55">
         <div className="container flex h-14 items-center justify-between">
           <Brand />
-          <nav className="flex items-center gap-1">
-            <NavTab to="/upload" label="Upload" icon={<FileText className="h-4 w-4" />} />
-            <NavTab to="/ask" label="Ask" icon={<MessagesSquare className="h-4 w-4" />} />
+          <div className="flex items-center gap-2">
+            <nav className="flex items-center gap-1 rounded-full bg-secondary/70 p-1">
+              <NavTab to="/upload" label="Upload" icon={<FileText className="h-4 w-4" />} />
+              <NavTab to="/ask" label="Ask" icon={<MessagesSquare className="h-4 w-4" />} />
+            </nav>
             <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground">
               Sign out
             </Button>
-          </nav>
+          </div>
         </div>
       </header>
 
-      <main className="container py-8">
+      <main className="container animate-rise py-10">
         <Routes>
           <Route path="/" element={<Navigate to="/upload" replace />} />
           <Route path="/upload" element={<UploadPage />} />
