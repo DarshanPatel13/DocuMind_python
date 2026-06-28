@@ -23,6 +23,7 @@ from documind_contracts import AskRequest, Citation
 
 from app import conversation_service
 from app.guardrails import INJECTION_REFUSAL, detect_prompt_injection
+from app.intent import is_aggregate_query
 from app.observability import get_langfuse_handler
 from app.prompt import NO_INFO_ANSWER, build_messages
 
@@ -43,6 +44,24 @@ class AskService:
         if self._chat_model is None:             # lazily built so import needs no API key
             self._chat_model = get_chat_model()
         return self._chat_model
+
+    async def _gather_docs(self, req: AskRequest, whole_doc: bool):
+        """Pick chunks for the prompt. Whole-document mode (list-all / summarize)
+        reads the entire target document; otherwise we use hybrid top-k."""
+        if whole_doc:
+            document_id = req.document_id
+            if document_id is None:
+                # No scope chosen: pick the single most relevant document, then read
+                # all of it (this is what "list all questions" across docs needs).
+                top = await retrieval.retrieve(req.question, 1, None)
+                if top:
+                    document_id = top[0][0].metadata.get("document_id")
+            if document_id is not None:
+                docs = await retrieval.fetch_document_chunks(document_id)
+                if docs:
+                    return docs
+        results = await retrieval.retrieve(req.question, self.top_k, req.document_id)
+        return [doc for doc, _score in results]
 
     async def answer_stream(self, req: AskRequest) -> AsyncIterator[str]:
         conversation_id = req.conversation_id or uuid.uuid4().hex
@@ -65,20 +84,29 @@ class AskService:
             )
             return
 
-        # 1. Hybrid retrieval (vector + keyword, fused + optionally reranked).
-        results = await retrieval.retrieve(req.question, self.top_k, req.document_id)
-        docs = [doc for doc, _score in results]
+        # 1. Choose a retrieval strategy. "List all / summarize the whole document"
+        #    queries can't be answered by top-k (it only sees k of N chunks), so for
+        #    that intent we read the ENTIRE target document instead.
+        whole_doc = is_aggregate_query(req.question)
+        docs = await self._gather_docs(req, whole_doc)
+
+        # Cap displayed citations in whole-doc mode (don't flood the UI with N chips).
+        cite_docs = docs[:6] if whole_doc else docs
         citations = [
             Citation(
                 filename=str(doc.metadata.get("filename", "unknown")),
                 chunk_index=int(doc.metadata.get("chunk_index", 0)),
                 snippet=doc.page_content[:600],  # source preview for the UI
             )
-            for doc in docs
+            for doc in cite_docs
         ]
         chunk_ids = [str(doc.metadata.get("chunk_id")) for doc in docs]
         log.info(
-            "retrieved", stage="retrieve", conversation_id=conversation_id, matches=len(docs)
+            "retrieved",
+            stage="retrieve",
+            conversation_id=conversation_id,
+            matches=len(docs),
+            mode="whole_document" if whole_doc else "hybrid",
         )
 
         # 2. Emit citations + the conversation id up front so the UI can render
@@ -97,7 +125,7 @@ class AskService:
             answer = NO_INFO_ANSWER
             yield _sse({"type": "token", "token": answer})
         else:
-            messages = build_messages(req.question, docs)
+            messages = build_messages(req.question, docs, whole_document=whole_doc)
             # Trace this LLM call in Langfuse when configured (no-op otherwise).
             handler = get_langfuse_handler()
             config = {"callbacks": [handler]} if handler else {}

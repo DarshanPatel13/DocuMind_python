@@ -90,6 +90,33 @@ async def _keyword_candidates(query: str, n: int, document_id: uuid.UUID | None)
         return []
 
 
+def _all_chunks_sync(document_id: str, limit: int) -> list[Document]:
+    # Every chunk of one document, in reading order — used by "whole-document" mode
+    # for list-all / summarize queries that top-k retrieval can't satisfy.
+    sql = """
+        SELECT e.document, e.cmetadata
+        FROM langchain_pg_embedding e
+        JOIN langchain_pg_collection c ON c.uuid = e.collection_id
+        WHERE c.name = %(coll)s
+          AND e.cmetadata->>'document_id' = %(doc)s
+        ORDER BY (e.cmetadata->>'chunk_index')::int ASC
+        LIMIT %(n)s
+    """
+    params = {"coll": settings.vector_collection, "doc": document_id, "n": limit}
+    with psycopg.connect(settings.psycopg_conninfo) as conn, conn.cursor() as cur:
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+    return [Document(page_content=text, metadata=meta or {}) for text, meta in rows]
+
+
+async def fetch_document_chunks(document_id: uuid.UUID | str, limit: int = 120) -> list[Document]:
+    """Return up to `limit` chunks of one document, ordered by chunk_index.
+
+    (At very large scale this is where you'd map-reduce instead of stuffing the
+    whole document into one prompt — noted as a next step.)"""
+    return await asyncio.to_thread(_all_chunks_sync, str(document_id), limit)
+
+
 def reciprocal_rank_fusion(
     ranked_lists: list[list[Document]], k: int = RRF_K
 ) -> list[tuple[Document, float]]:
