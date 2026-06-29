@@ -114,14 +114,14 @@ export function LandingPage() {
         <div className="container">
           <div className="mx-auto mb-7 inline-flex animate-rise items-center gap-2 rounded-full border bg-card/70 px-4 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur">
             <Sparkles className="h-4 w-4 text-primary" />
-            Retrieval-augmented · grounded in your files
+            Answers grounded in your files
           </div>
           <h1 className="mx-auto max-w-4xl text-balance text-6xl font-semibold leading-[1.04] tracking-tight sm:text-7xl">
             Ask your <span className="text-gradient">documents</span> anything.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-xl leading-relaxed text-muted-foreground">
-            Upload a PDF and get instant, grounded answers — with citations you can trust.
-            Private, and free to run entirely on your own machine.
+            Upload a PDF. Get instant answers — grounded in your files, cited, and private.
+            Free to run entirely on your own machine.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" className="h-12 px-7 text-[15px] shadow-glow" onClick={scrollToLogin}>
@@ -273,7 +273,7 @@ export function LandingPage() {
           </span>
           DocuMind
         </p>
-        <p className="mt-2">Microservices RAG document Q&amp;A · grounded · cited · private.</p>
+        <p className="mt-2">Document intelligence. Grounded. Cited. Private.</p>
       </footer>
     </div>
   );
