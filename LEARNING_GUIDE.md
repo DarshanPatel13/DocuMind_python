@@ -14,10 +14,14 @@ This guide makes the project *yours*. Read it top to bottom, then have Claude qu
 > | `backend/app/rag/{providers,vector_store}.py` | `libs/documind_common/documind_common/` |
 > | `backend/app/models/*` | `libs/documind_contracts/` |
 >
-> For the current architecture and a Spring/Java glossary, start with
-> [`docs/architecture/container.md`](docs/architecture/container.md),
-> [`docs/for-java-devs.md`](docs/for-java-devs.md), and the
-> [`docs/`](docs/) tree (AI deep-dives, ADRs, interview cheatsheet, runbook).
+> For the **current** file-by-file map use
+> [`docs/architecture/code-structure.md`](docs/architecture/code-structure.md)
+> (every file → its layer) and
+> [`docs/architecture/container.md`](docs/architecture/container.md) (C4 + flows).
+> Also: [`docs/for-java-devs.md`](docs/for-java-devs.md) (Spring/Java glossary),
+> [`docs/interview/python-deep-dive.md`](docs/interview/python-deep-dive.md)
+> (Python-specific rehearsal), and the [`docs/`](docs/) tree (AI deep-dives, ADRs,
+> cheatsheet, runbook).
 
 ---
 
@@ -41,11 +45,11 @@ The enabling trick is the **embedding**: a function mapping text to a point in h
 ### Walkthrough 1 — upload → ingestion
 
 1. The **UploadDropzone** component (`frontend/src/components/UploadDropzone.tsx`) validates the file client-side and calls the **useUpload** hook, which posts to the API via `uploadDocument` (`frontend/src/api/documind.ts`).
-2. **`upload_document`** in `backend/app/api/routes_documents.py` reads the bytes and calls **`document_service.upload`**.
-3. **`document_service.upload`** (`backend/app/services/document_service.py`) runs **`validate_pdf`** (size, type, `%PDF` magic bytes), writes the file to `./storage/{id}.pdf`, inserts a `DocumentRow` (status `UPLOADED`) via SQLAlchemy, and calls **`producer.publish`** with a `DocumentUploadedEvent`. The API returns **202** immediately.
-4. **`IngestionConsumer._run`** (`backend/app/kafka/consumer.py`, group `documind-ingestion`) receives the event and calls **`_handle`**, which drives the retry loop around **`ingestion_service.ingest`**.
-5. **`ingestion_service.ingest`** (`backend/app/services/ingestion_service.py`) checks idempotency (skip if `READY`), sets `PROCESSING`, extracts text with **`extract_pdf_text`** (pypdf), splits it with **`split_text`** (`backend/app/rag/chunking.py`), and calls **`vector_store.add_chunks`**.
-6. **`vector_store.add_chunks`** (`backend/app/rag/vector_store.py`) embeds the chunks (OpenAI, via LangChain's PGVector) and upserts them with deterministic ids; status becomes `READY` with the chunk count.
+2. The **gateway** (`services/gateway/app/main.py`) authenticates the JWT and proxies the upload to **document-service**; **`upload_document`** (`services/document-service/app/routes.py`) reads the bytes and calls **`service.upload`**.
+3. **`service.upload`** (`services/document-service/app/service.py`) runs **`validate_pdf`** (size, type, `%PDF` magic bytes), writes the file to `/data/storage/{id}.pdf`, inserts a `DocumentRow` (status `UPLOADED`) via SQLAlchemy, and calls **`producer.publish`** with a `DocumentUploadedEvent`. The API returns **202** immediately.
+4. **`IngestionConsumer._run`** (`services/document-service/app/consumer.py`, group `documind-ingestion`) receives the event and calls **`_handle`**, which drives the retry loop around **`ingestion.ingest`**.
+5. **`ingestion.ingest`** (`services/document-service/app/ingestion.py`) checks idempotency (skip if `READY`), sets `PROCESSING`, extracts text with **`extract_pdf_text`** (pypdf), splits it with **`split_text`** (`services/document-service/app/chunking.py`), and calls **`vector_store.add_chunks`**.
+6. **`vector_store.add_chunks`** (`libs/documind_common/documind_common/vector_store.py`) embeds the chunks with the **configured provider** (OpenAI, Anthropic→OpenAI, or local Ollama) via LangChain's PGVector and upserts them with deterministic ids; status becomes `READY` with the chunk count.
 7. On repeated failure, **`_dead_letter`** marks the document `FAILED` and republishes the event to `document-events.DLT`.
 8. Meanwhile the **useDocuments** hook is polling `GET /api/documents` every 3s, so the **StatusBadge** advances to READY on its own.
 
@@ -53,10 +57,10 @@ The enabling trick is the **embedding**: a function mapping text to a point in h
 
 1. In **ChatView** (`frontend/src/components/ChatView.tsx`) the user submits a question; the **useAsk** hook calls **`streamAsk`** (`frontend/src/api/documind.ts`).
 2. **`streamAsk`** issues `POST /api/ask` with `fetch` and reads the response body as a stream.
-3. **`ask`** in `backend/app/api/routes_ask.py` (rate-limited 10/min/IP by slowapi) returns a `StreamingResponse` wrapping **`AskService.answer_stream`**.
-4. **`AskService.answer_stream`** (`backend/app/services/ask_service.py`) calls **`vector_store.search`** — embed the question, cosine top-4 in pgvector (optionally filtered to one `document_id`).
+3. The **gateway** verifies the JWT and applies a **Redis-backed rate limit** (per user) on the expensive `/api/ask`, then proxies to **query-service**; **`ask`** (`services/query-service/app/routes_ask.py`) returns a `StreamingResponse` wrapping **`AskService.answer_stream`**.
+4. **`AskService.answer_stream`** (`services/query-service/app/ask_service.py`) first runs a **prompt-injection guardrail**, then **hybrid retrieval** (`libs/documind_common/documind_common/retrieval.py`): a vector arm + a keyword arm fused with RRF (optionally reranked), scoped to one `document_id` if chosen. ("List all / summarize" questions switch to whole-document mode via `intent.py`.)
 5. It emits an SSE `citations` event (with the `conversation_id`), then **grounding guard**: if no chunks were retrieved it streams the exact sentinel and never calls the LLM.
-6. Otherwise it builds the grounded prompt (**`build_messages`**, `backend/app/rag/prompt.py`) and `async for chunk in chat_model.astream(...)`, emitting a `token` SSE event per chunk.
+6. Otherwise it builds the grounded prompt (**`build_messages`**, `services/query-service/app/prompt.py`) and `async for chunk in chat_model.astream(...)`, emitting a `token` SSE event per chunk.
 7. After `done`, it persists the turn via **`conversation_service.save_turn`** (MongoDB).
 8. Back in the browser, **`streamAsk`** parses each SSE line and calls handlers; **useAsk** appends each token to `answer`, so **ChatView** re-renders token-by-token and shows **CitationChip**s.
 
@@ -66,26 +70,31 @@ The enabling trick is the **embedding**: a function mapping text to a point in h
 
 ### Backend
 
-- **`app/core/config.py`** — `pydantic-settings` Settings: every knob, typed, read once from env/.env. Computes the two Postgres URLs (asyncpg for metadata, psycopg for PGVector).
-- **`app/core/logging.py`** — structlog setup; each stage logs `event ... stage=...` key/value lines.
-- **`app/core/rate_limit.py`** — the shared slowapi `Limiter`, keyed by client IP.
-- **`app/db/postgres.py`** — async SQLAlchemy engine + session factory + `init_db` (creates the `documents` table). The `get_session` dependency yields a session per request.
-- **`app/db/mongo.py`** — Motor client, the `conversation_turns` collection, and an index on `conversation_id`.
-- **`app/models/document.py`** — the `DocumentRow` ORM model and the `DocumentStatus` enum.
-- **`app/models/events.py`** — `DocumentUploadedEvent` (the Kafka payload).
-- **`app/models/schemas.py`** — Pydantic request/response models; the API contract that mirrors the frontend types.
-- **`app/rag/providers.py`** — `get_embeddings()` / `get_chat_model()`; the only place a concrete provider is named. The Anthropic swap lives here.
-- **`app/rag/chunking.py`** — `split_text` wraps `RecursiveCharacterTextSplitter`; converts token counts to characters with the /4 heuristic.
-- **`app/rag/vector_store.py`** — the PGVector singleton plus `add_chunks` (upsert by deterministic id) and `search` (cosine top-k with optional filter), each offloaded with `asyncio.to_thread`.
-- **`app/rag/prompt.py`** — the system prompt, the `NO_INFO_ANSWER` sentinel, and `build_messages`.
-- **`app/rag/pdf_extract.py`** — pypdf behind one function.
-- **`app/kafka/producer.py` / `consumer.py`** — aiokafka producer; the `IngestionConsumer` background task with retry/backoff → DLT and manual offset commits.
-- **`app/services/document_service.py`** — upload validation + store + metadata + publish; document listing.
-- **`app/services/ingestion_service.py`** — the idempotent ingestion pipeline.
-- **`app/services/ask_service.py`** — the streamed RAG flow (the five steps in Walkthrough 2).
-- **`app/services/conversation_service.py`** — Mongo save/read for history.
-- **`app/api/routes_*.py`** — thin FastAPI routers.
-- **`app/main.py`** — lifespan (boot DB/Mongo/Kafka, start consumer), CORS, slowapi, exception handlers, route registration, `/health`.
+> The current, authoritative file-by-file map lives in
+> [`docs/architecture/code-structure.md`](docs/architecture/code-structure.md) —
+> every module mapped to its layer (controller / service / repository / messaging).
+> Use that for exact paths; the *concepts* below still apply.
+
+Since the original monolith, the backend split into **three services + a gateway**
+and gained the production concerns worth knowing for the walkthrough:
+
+- **`services/gateway/`** — the only public entry point: JWT auth + bcrypt
+  (`security.py` / `auth.py`), CORS, a **Redis** rate limiter keyed per user
+  (`rate_limit.py`), and a streaming reverse `proxy.py` that forwards SSE without
+  buffering. `db.py` owns the users table + demo-user seed.
+- **`services/document-service/`** — uploads + the Kafka ingestion consumer:
+  `routes.py`, `service.py`, `producer.py`, `consumer.py`, `ingestion.py`,
+  `chunking.py`, `pdf_extract.py`, `models.py` (`DocumentRow`).
+- **`services/query-service/`** — the RAG ask flow + Mongo history: `routes_ask.py`,
+  `ask_service.py`, `prompt.py`, `intent.py` (whole-document mode), `guardrails.py`
+  (prompt-injection screen), `conversation_service.py`, `mongo.py`,
+  `observability.py` (optional Langfuse).
+- **`libs/documind_common/`** — shared infra: `config.py` (provider profiles),
+  `providers.py` (the LLM/embeddings seam), `vector_store.py`, `retrieval.py`
+  (hybrid vector + keyword + RRF + optional rerank), `reranker.py`,
+  `correlation.py` (X-Request-ID tracing), `logging.py`.
+- **`libs/documind_contracts/`** — the shared DTOs/events both services depend on
+  (the old `app/models/*`).
 
 ### Frontend
 
@@ -162,7 +171,7 @@ Ingestion takes seconds to minutes (extraction + many embedding calls) and doesn
 
 ### What changes at 10x scale
 
-Run multiple FastAPI workers behind a load balancer (state already lives in Postgres/Mongo/Kafka; move the slowapi limiter to Redis). Add Kafka partitions and ingestion consumers. Pool/replica Postgres; consider HNSW as chunk count grows. Batch embeddings harder and watch provider rate-limit tiers. Add a re-rank step (retrieve 20 → re-rank to 4) and cache embeddings/answers for repeated questions. The shape doesn't change — that's the point of starting with queues and stateless services.
+Run multiple gateway/service replicas behind a load balancer (state already lives in Postgres/Mongo/Kafka/Redis; the rate limiter is already Redis-backed, so it stays correct across replicas). Add Kafka partitions and ingestion consumers. Pool/replica Postgres; consider HNSW as chunk count grows. Batch embeddings harder and watch provider rate-limit tiers. Add a re-rank step (retrieve 20 → re-rank to 4) and cache embeddings/answers for repeated questions. The shape doesn't change — that's the point of starting with queues and stateless services.
 
 ---
 
@@ -182,7 +191,7 @@ Run multiple FastAPI workers behind a load balancer (state already lives in Post
 
 **What does each question cost?** Embedding the question: ~30 tokens at $0.02/M ≈ $0.0000006. Chat input ≈ system prompt + 4×800-token chunks + question ≈ 3,300 tokens at $0.15/M ≈ $0.0005; output ~250 tokens at $0.60/M ≈ $0.00015. **≈ $0.00065 per question, ~1,500 per dollar.** A 100-page PDF ingests for ~$0.0015.
 
-**Scale to 1,000 concurrent users?** Stateless FastAPI workers behind a load balancer; rate limiter to Redis; Postgres pooling/replicas and HNSW as vectors grow; more Kafka partitions + consumers for ingestion; the LLM provider's rate limit becomes the bottleneck, so queue requests, cache embeddings, and cache answers for hot question+document pairs.
+**Scale to 1,000 concurrent users?** Stateless service replicas behind a load balancer (the rate limiter is already Redis-backed); Postgres pooling/replicas and HNSW as vectors grow; more Kafka partitions + consumers for ingestion; the LLM provider's rate limit becomes the bottleneck, so queue requests, cache embeddings, and cache answers for hot question+document pairs.
 
 ### Python
 
@@ -233,7 +242,7 @@ Run multiple FastAPI workers behind a load balancer (state already lives in Post
 
 ## 6. "Explain it like I built it" (60 seconds)
 
-> "DocuMind is a full-stack RAG app — a FastAPI/LangChain backend and a React/TypeScript frontend — for asking natural-language questions over your own PDFs. You upload a document and the API returns instantly with a 202 while a Kafka consumer does the slow work asynchronously: it extracts the text with pypdf, splits it into ~800-token overlapping chunks, embeds them with OpenAI, and stores the vectors in Postgres with pgvector — with retries, a dead-letter topic, and an idempotent consumer, because at-least-once delivery means duplicates are a *when*. When you ask a question, I embed it, run a cosine-similarity search for the four nearest chunks, and send the model a grounded prompt — answer only from this context, cite every claim, say 'I don't have enough information' otherwise — and if retrieval comes back empty my code returns that sentence without ever calling the model. The answer streams back over Server-Sent Events and the React UI renders it token-by-token with citation chips, while TanStack Query handles caching, polling documents to READY, and refreshing after uploads. It's all behind LangChain interfaces, so switching the chat model to Claude is a config change. Each question costs about a fifteenth of a cent, and I can show you exactly where that number comes from."
+> "DocuMind is a full-stack RAG app — a FastAPI/LangChain backend split into three microservices behind an API gateway, and a React/TypeScript frontend — for asking natural-language questions over your own PDFs. You upload a document and the API returns instantly with a 202 while a Kafka consumer does the slow work asynchronously: it extracts the text with pypdf, splits it into ~800-token overlapping chunks, embeds them with the configured provider (OpenAI, Anthropic, or a fully-local Ollama), and stores the vectors in Postgres with pgvector — with retries, a dead-letter topic, and an idempotent consumer, because at-least-once delivery means duplicates are a *when*. When you ask a question, I run hybrid retrieval — a vector search and a keyword search fused with RRF — for the most relevant chunks, and send the model a grounded prompt — answer only from this context, cite every claim, say 'I don't have enough information' otherwise — and if retrieval comes back empty my code returns that sentence without ever calling the model. The answer streams back over Server-Sent Events and the React UI renders it token-by-token with citation chips, while TanStack Query handles caching, polling documents to READY, and refreshing after uploads. It's all behind LangChain interfaces, so switching the chat model to Claude is a config change. Each question costs about a fifteenth of a cent, and I can show you exactly where that number comes from."
 
 ---
 
