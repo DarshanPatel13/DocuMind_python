@@ -13,8 +13,9 @@ RUN pip install --no-cache-dir /libs/documind_contracts /libs/documind_common
 COPY services/query-service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 3. Service code.
+# 3. Service code + the eval suite (run from the UI via /api/evals).
 COPY services/query-service/app ./app
+COPY evals ./evals
 
 EXPOSE 8002
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]
