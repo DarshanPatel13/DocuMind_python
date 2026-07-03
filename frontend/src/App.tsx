@@ -1,4 +1,4 @@
-import { FileText, MessagesSquare, Sparkles } from "lucide-react";
+import { FileText, Gauge, MessagesSquare, Sparkles } from "lucide-react";
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 import { useAuth } from "./auth/AuthContext";
 import { AskPage } from "./pages/AskPage";
+import { EvalsPage } from "./pages/EvalsPage";
 import { LandingPage } from "./pages/LandingPage";
 import { UploadPage } from "./pages/UploadPage";
 
@@ -66,6 +67,7 @@ export default function App() {
             <nav className="flex items-center gap-1 rounded-full bg-secondary/70 p-1">
               <NavTab to="/upload" label="Upload" icon={<FileText className="h-4 w-4" />} />
               <NavTab to="/ask" label="Ask" icon={<MessagesSquare className="h-4 w-4" />} />
+              <NavTab to="/evals" label="Evals" icon={<Gauge className="h-4 w-4" />} />
             </nav>
             <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground">
@@ -80,6 +82,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/upload" replace />} />
           <Route path="/upload" element={<UploadPage />} />
           <Route path="/ask" element={<AskPage />} />
+          <Route path="/evals" element={<EvalsPage />} />
         </Routes>
       </main>
     </div>

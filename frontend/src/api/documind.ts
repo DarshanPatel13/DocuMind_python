@@ -6,6 +6,7 @@ import type {
   AskStreamHandlers,
   ConversationHistory,
   DocumentResponse,
+  EvalStatus,
   TokenResponse,
   UploadResponse,
   StreamEvent,
@@ -36,6 +37,16 @@ export async function uploadDocument(
       }
     },
   });
+  return data;
+}
+
+/** Kick off a behavioural eval run (202; 409 when one is already running). */
+export async function runEvals(): Promise<void> {
+  await apiClient.post("/api/evals/run");
+}
+
+export async function getEvalStatus(): Promise<EvalStatus> {
+  const { data } = await apiClient.get<EvalStatus>("/api/evals/status");
   return data;
 }
 

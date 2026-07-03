@@ -101,6 +101,13 @@ make evals                      # = RUN_EVALS=1 python -m evals.run
 # options: python -m evals.run --base-url http://localhost:8080 --no-fail
 ```
 
+**Or from the UI:** the **Evals** page (nav → Evals) runs the same suite through
+`POST /api/evals/run` — query-service executes it back through the gateway, the
+page live-polls progress, and renders the metric cards, per-case results, and
+the judge's unsupported-claims findings. The judge key/endpoint comes from the
+service's env (`OPENAI_API_KEY`, `OPENAI_BASE_URL`, `EVAL_JUDGE_MODEL` in `.env`
+— any OpenAI-compatible endpoint, e.g. Groq's free tier).
+
 Auth is automatic: the harness logs in as the demo user (`demo`/`demo12345`)
 via `POST /auth/login` and sends the JWT on every call — that's also how to mint
 a token manually. Note the gateway rate-limits `/api/ask` to 10/min; the harness
