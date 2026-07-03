@@ -127,6 +127,25 @@ class AskService:
             }
         )
 
+        # Eval/debug opt-in: expose the retrieved chunks (ids + FULL text, not the
+        # 600-char snippets) so the eval harness can judge groundedness against
+        # the real context. Never sent unless the request set debug=true.
+        if req.debug:
+            yield _sse(
+                {
+                    "type": "context",
+                    "chunks": [
+                        {
+                            "chunk_id": str(doc.metadata.get("chunk_id")),
+                            "filename": str(doc.metadata.get("filename", "unknown")),
+                            "chunk_index": int(doc.metadata.get("chunk_index", 0)),
+                            "text": doc.page_content,
+                        }
+                        for doc in docs
+                    ],
+                }
+            )
+
         # 3. Grounding guard: no context -> return the sentinel WITHOUT calling
         #    the LLM (it could only improvise).
         if not docs:

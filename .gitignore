@@ -17,6 +17,7 @@ dist/
 playwright-report/
 test-results/
 eval/results/
+evals/results/
 
 # ---- Tooling run logs ----
 .codex-run/

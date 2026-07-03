@@ -16,6 +16,10 @@ class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
     document_id: uuid.UUID | None = None
     conversation_id: str | None = None
+    # Opt-in (used by the eval harness): stream a `context` SSE event carrying the
+    # full retrieved chunks so groundedness can be judged. Default OFF — the UI
+    # never sets it and behavior is unchanged.
+    debug: bool = False
 
 
 class Citation(BaseModel):
