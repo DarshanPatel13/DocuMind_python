@@ -1,0 +1,38 @@
+MERIDIAN CORP EMPLOYEE HANDBOOK
+Revision 4.2 - Effective January 5, 2026
+People Operations - Internal Document
+
+Section 1. Welcome to Meridian
+Meridian Corp builds logistics-planning software for mid-market manufacturers. Founded in Oakland, California, the company serves customers across North America and Europe from three regional offices. This handbook summarizes the policies that apply to all full-time employees in the United States. It is reviewed twice a year by People Operations and the Legal team, and the effective revision is always the one published on the internal policy portal. Where local law differs from a policy described here, local law prevails. Questions about anything in this handbook go to people-ops@meridiancorp.example, and suggested corrections are welcome at any time.
+
+Section 2. Time Off
+Full-time employees receive 18 days of paid time off (PTO) per calendar year, accrued monthly at 1.5 days per month from the first day of employment. Up to 5 unused PTO days may be carried over into the next calendar year; any carried days beyond 5 are forfeited on January 31. Separately from PTO, employees receive 8 paid sick days per year, which do not carry over and do not pay out at separation. Meridian also observes 11 paid company holidays, published each November for the following year. PTO requests longer than 5 consecutive working days require manager approval at least 3 weeks in advance so coverage can be arranged. PTO does not accrue during unpaid leave. Managers are expected to encourage their teams to actually use their PTO; carrying a large unused balance into December is considered a planning failure, not a badge of honor.
+
+Section 3. Hybrid Work
+Meridian operates a hybrid working model. Tuesday and Wednesday are Anchor Days: all employees who live within 40 miles of their assigned office are expected to work onsite on those two days. Employees may work remotely up to 3 days per week. Teams may add a third onsite day for specific rituals such as quarterly planning, but this must be announced at least two weeks ahead. A permanently remote arrangement requires VP approval and an updated work agreement filed with People Operations. Employees working remotely are expected to be reachable during their team's posted core hours and to keep their working location current in the HR system.
+
+Section 4. Business Expenses
+Meridian reimburses reasonable business expenses submitted within 30 days of purchase with itemized receipts attached in the expense tool. Meal limits are 65 USD per person per day for domestic travel and 90 USD per person per day for international travel; alcohol is not reimbursable. Hotel bookings are capped at 250 USD per night before taxes in all cities; exceptions for conference hotels must be approved before booking. Any single expense over 500 USD requires written VP approval before purchase, with the approval attached to the expense report. Flights should be booked through the corporate travel portal in economy class for flights under six hours. Ground transport should use the corporate ride account where available; personal-car mileage is reimbursed at the prevailing IRS rate. Expense reports that miss the 30-day window require a written exception from Finance and may be declined.
+
+Section 5. Benefits
+Meridian matches 100% of employee 401(k) contributions up to 4% of eligible salary, with matching contributions vesting immediately. Enrollment changes outside the annual open-enrollment window require a qualifying life event. The Meridian Care Fund reimburses up to 2,000 USD per calendar year for dependent-care emergencies such as last-minute childcare or elder-care needs. A wellness stipend of 75 USD per month covers gym memberships, mental-health apps, or comparable services, claimed quarterly through the expense tool. Under the Meridian Flex Fridays program, no internal meetings may be scheduled after 1:00 PM local time on Fridays; the protected time is intended for focused work, learning, or an early start to the weekend when the week's commitments are met.
+
+Section 6. Learning and Development
+Each employee has a 2,500 USD annual learning budget covering courses, books, certifications, and coaching. The budget resets on January 1 and does not roll over. Attendance at one industry conference per year is covered separately from the learning budget with manager approval; international conference travel additionally requires VP approval. Employees who present a talk or workshop at a conference receive an extra travel day and have registration fees covered by the company regardless of remaining budget. Study time for approved certifications may be scheduled during working hours with manager agreement.
+
+Section 7. On-Call (Platform Engineering)
+The platform engineering team runs a weekly on-call rotation covering production systems around the clock. The current rotation order is:
+Week 1: Alice Chen
+Week 2: Marcus Webb
+Week 3: Priya Nair
+Week 4: Diego Alvarez
+Handoff happens every Monday at 10:00 Pacific during the platform sync meeting, including a review of open incidents and silenced alerts. The on-call engineer must acknowledge pages within 15 minutes. If a page remains unacknowledged after 15 minutes, PagerDuty escalates automatically to the SRE lead, Jordan Kim. On-call weeks carry a 400 USD stipend, paid with the following payroll cycle. Swaps are allowed but must be recorded in the rotation calendar at least 48 hours in advance so escalation paths stay accurate. Engineers coming off a high-severity incident night are expected to start late the next day, and managers are responsible for making that real.
+
+Section 8. Security and Incident Reporting
+All laptops must run full-disk encryption and the managed device profile installed by IT. Suspected security incidents - phishing messages, lost or stolen devices, unusual account activity - must be reported to security@meridiancorp.example within 24 hours of discovery. Reporting in good faith is always the right call, even for false alarms. Annual security training is mandatory for all employees and runs every March; new hires complete it within their first 30 days. Access to production systems requires a hardware security key issued by IT, and shared credentials are prohibited. Visitors in the office must be badged and accompanied at all times.
+
+Section 9. Code of Conduct
+Meridian is committed to a respectful, harassment-free workplace for everyone, regardless of role, background, or identity. Concerns may be raised with any manager, with People Operations, or anonymously through the EthicsLine. All reports are handled confidentially to the extent the situation allows. Retaliation against anyone who reports a concern in good faith is prohibited and is itself a serious violation of this handbook.
+
+Acknowledgement
+This handbook is a summary of current policy, not an employment contract, and it does not alter the at-will nature of employment. Policies may change with notice from People Operations, and the portal version always controls. Please direct corrections or questions to the handbook editors via people-ops@meridiancorp.example.
