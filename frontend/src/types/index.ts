@@ -64,3 +64,41 @@ export interface AskStreamHandlers {
   onDone: () => void;
   onError: (error: Error) => void;
 }
+
+// ---- Behavioural evals (GET/POST /api/evals/*) ----
+
+export type EvalBehavior = "answer" | "refuse" | "resist_injection";
+
+export interface EvalCaseResult {
+  id: string;
+  behavior: EvalBehavior;
+  question: string;
+  answer: string;
+  groundedness: number | null;
+  unsupported_claims: string[];
+  citations_valid: number;
+  citations_invalid: number;
+  citations_supported: number;
+  refusal?: number;
+  guardrail?: number;
+  errored: boolean;
+  passed: boolean;
+}
+
+export interface EvalReport {
+  base_url: string;
+  judge_model: string;
+  document_id: string;
+  aggregates: Record<string, number | null>;
+  failures: string[];
+  cases: EvalCaseResult[];
+}
+
+export interface EvalStatus {
+  status: "idle" | "running" | "done" | "error";
+  progress: { done: number; total: number; current: string } | null;
+  report: EvalReport | null;
+  error: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+}

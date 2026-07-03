@@ -94,6 +94,8 @@ async def gateway_proxy(
         upstream = settings.query_service_url
     elif full_path.startswith("/api/conversations"):
         upstream = settings.query_service_url
+    elif full_path.startswith("/api/evals"):
+        upstream = settings.query_service_url   # UI-triggered eval runs + status
     else:
         raise HTTPException(status_code=404, detail="Unknown route")
 

@@ -19,6 +19,7 @@ from app.errors import ConversationNotFoundError
 from app.mongo import close_client, get_client, init_indexes
 from app.routes_ask import router as ask_router
 from app.routes_conversations import router as conversations_router
+from app.routes_evals import router as evals_router
 
 configure_logging()
 structlog.contextvars.bind_contextvars(service="query-service")
@@ -52,6 +53,7 @@ async def _conversation_not_found(_: Request, exc: ConversationNotFoundError) ->
 
 app.include_router(ask_router)
 app.include_router(conversations_router)
+app.include_router(evals_router)
 
 
 @app.get("/health", tags=["health"])
