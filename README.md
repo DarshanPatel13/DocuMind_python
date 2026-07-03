@@ -79,6 +79,7 @@ make down    # stop it
 make logs    # tail all logs
 make test    # run every service's unit tests (in containers)
 make ps      # show running containers
+make evals   # behavioural evals: golden dataset + LLM judge (needs OPENAI_API_KEY; costs cents)
 ```
 
 ## API (through the gateway)
@@ -136,8 +137,12 @@ in a ~3.66 GB Docker cap). Details:
 ## AI / LLM engineering
 - **Hybrid retrieval** (pgvector + Postgres full-text) fused with Reciprocal Rank
   Fusion, plus an optional cross-encoder **reranker**.
-- **Evaluation:** `make eval` reports hit-rate@k / MRR (±rerank) and Ragas
-  faithfulness/relevancy/precision/recall — see [`docs/ai/evaluation.md`](docs/ai/evaluation.md).
+- **Evaluation (two layers):** `make eval` reports hit-rate@k / MRR (±rerank) and
+  Ragas faithfulness/relevancy/precision/recall; `make evals` runs the
+  **behavioural suite** — a golden "Meridian handbook" dataset scored end-to-end
+  through the real API for groundedness (LLM-as-judge), citation accuracy,
+  refusal correctness, and prompt-injection robustness, with CI-gate thresholds.
+  See [`docs/ai/evaluation.md`](docs/ai/evaluation.md) and [`EVALS_GUIDE.md`](EVALS_GUIDE.md).
 - **Observability:** Langfuse traces every LLM call (`make observability`).
 - **Guardrails:** grounded-only answering + prompt-injection screening.
 
@@ -161,6 +166,7 @@ Full AI docs: [`docs/ai/`](docs/ai/).
 | [`docs/for-java-devs.md`](docs/for-java-devs.md) | Python/React/AI ↔ Spring/Java glossary |
 | [`docs/architecture/code-structure.md`](docs/architecture/code-structure.md) | **where each file lives** + the layer it belongs to (answers "why no service/repo folders?") |
 | [`docs/ai/`](docs/ai/) | RAG architecture, evaluation, observability, guardrails |
+| [`EVALS_GUIDE.md`](EVALS_GUIDE.md) | **behavioural eval suite** — metrics, LLM-as-judge trade-offs, CI gating |
 | [`docs/interview/cheatsheet.md`](docs/interview/cheatsheet.md) | Q&A grounded in this code |
 | [`docs/interview/python-deep-dive.md`](docs/interview/python-deep-dive.md) | **Python-specific** rehearsal: async/event-loop, streaming, packaging, trade-offs |
 | [`docs/runbook.md`](docs/runbook.md) | run it, demo script, failure drill, trace how-to |

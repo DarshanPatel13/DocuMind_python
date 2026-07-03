@@ -4,7 +4,7 @@
 .DEFAULT_GOAL := help
 COMPOSE := docker compose
 
-.PHONY: help up down logs build ps test seed eval
+.PHONY: help up down logs build ps test seed eval evals
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -37,6 +37,9 @@ seed: ## Upload the sample PDFs in ./samples (placeholder for Day 1)
 
 eval: ## RAG eval (retrieval + Ragas). Needs OPENAI_API_KEY exported + `make up` running.
 	VECTOR_COLLECTION=documind_eval POSTGRES_HOST=localhost python eval/run_eval.py --judge
+
+evals: ## Behavioural evals: golden dataset + LLM judge (needs stack up + OPENAI_API_KEY; costs cents)
+	RUN_EVALS=1 python -m evals.run
 
 observability: ## Start Langfuse (LLM tracing) at http://localhost:3000
 	$(COMPOSE) --profile observability up -d langfuse langfuse-db

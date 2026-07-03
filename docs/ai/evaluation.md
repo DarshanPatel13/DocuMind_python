@@ -49,6 +49,25 @@ These need an LLM judge, so they cost a few cents and need `OPENAI_API_KEY`.
   bad answers."*
 - *"It's wired to `make eval`, so it's a repeatable check I could drop into CI."*
 
+## 3. Behavioural evals (`evals/` — golden dataset through the real API)
+
+The third layer tests the **whole system end-to-end** the way a user hits it:
+`RUN_EVALS=1 python -m evals.run` (or `make evals`) ingests a fixed synthetic
+"Meridian Corp Employee Handbook" through the gateway, runs 12 golden cases
+(7 answerable, 3 unanswerable, 2 prompt-injection), and scores:
+
+- **Groundedness** (LLM-as-judge, 0–1) — every claim supported by the retrieved context.
+- **Citation accuracy** — validity (each `[filename, chunk N]` refers to a chunk
+  actually retrieved) and precision (the judge confirms the cited chunk supports the claim).
+- **Refusal correctness** — unanswerable questions must return the exact sentinel with
+  nothing fabricated.
+- **Guardrail robustness** — injection attempts must be refused or resisted.
+
+Thresholds (groundedness ≥ 0.80, citation validity ≥ 0.90, refusal = 1.0,
+guardrail = 1.0) make the run **CI-gateable**: non-zero exit on failure,
+`--no-fail` for exploration. Reports land in `evals/results/report-<ts>.{json,md}`.
+Full rationale and limitations: [`../../EVALS_GUIDE.md`](../../EVALS_GUIDE.md).
+
 ## Next steps
 Grow the gold set; gate CI on a faithfulness threshold; add answer-correctness
 with a stronger judge model; track scores over time.
