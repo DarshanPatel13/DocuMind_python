@@ -14,6 +14,7 @@ from documind_common.logging import get_logger
 from documind_contracts import DocumentStatus, DocumentUploadedEvent
 
 from app.chunking import split_text
+from app.contextual import enrich
 from app.errors import DocumentNotFoundError, IngestionError
 from app.models import DocumentRow
 from app.pdf_extract import extract_pdf_text
@@ -45,6 +46,10 @@ async def ingest(session: AsyncSession, event: DocumentUploadedEvent) -> None:
     log.info(
         "chunked", stage="chunked", document_id=str(event.document_id), chunks=len(chunks)
     )
+
+    # Optional: situate each chunk inside its document before embedding, so a
+    # chunk that only makes sense in context can still be retrieved on its own.
+    chunks = await enrich(chunks)
 
     count = await vector_store.add_chunks(event.document_id, event.filename, chunks)
 

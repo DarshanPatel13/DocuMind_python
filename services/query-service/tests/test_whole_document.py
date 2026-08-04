@@ -36,6 +36,7 @@ async def test_aggregate_query_reads_whole_document(monkeypatch: pytest.MonkeyPa
     # No scope chosen -> the flow first finds the most relevant document.
     monkeypatch.setattr(retrieval, "retrieve", AsyncMock(return_value=[(all_chunks[0], 0.1)]))
     monkeypatch.setattr(conversation_service, "save_turn", AsyncMock())
+    monkeypatch.setattr(conversation_service, "recent_turns", AsyncMock(return_value=[]))
 
     chat = AsyncMock()
     chat.astream = _fake_astream

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from dataclasses import dataclass
 
 import psycopg
 from langchain_core.documents import Document
@@ -40,11 +41,24 @@ def _doc_key(doc: Document) -> str:
     return f"{doc.metadata.get('document_id')}:{doc.metadata.get('chunk_index')}"
 
 
-async def _vector_candidates(query: str, n: int, document_id: uuid.UUID | None) -> list[Document]:
+async def _vector_candidates_scored(
+    query: str, n: int, document_id: uuid.UUID | None
+) -> list[tuple[Document, float]]:
+    """Dense arm, keeping the cosine DISTANCE alongside each document.
+
+    That distance is the only calibrated relevance signal in the whole pipeline —
+    RRF replaces it with rank-only scores and a reranker only reorders — so it is
+    deliberately carried out of here rather than dropped at the door."""
     store = get_vector_store()
     flt = {"document_id": {"$eq": str(document_id)}} if document_id is not None else None
     pairs = await asyncio.to_thread(store.similarity_search_with_score, query, k=n, filter=flt)
-    return [doc for doc, _score in pairs]
+    # langchain-postgres returns `result.distance` under its default COSINE
+    # strategy: 0 = identical direction, lower is closer.
+    return [(doc, float(score)) for doc, score in pairs]
+
+
+async def _vector_candidates(query: str, n: int, document_id: uuid.UUID | None) -> list[Document]:
+    return [doc for doc, _ in await _vector_candidates_scored(query, n, document_id)]
 
 
 def _keyword_sql_sync(query: str, n: int, document_id: uuid.UUID | None) -> list[Document]:
@@ -129,6 +143,100 @@ def reciprocal_rank_fusion(
     return [(doc, scores[_doc_key(doc)]) for doc in ordered]
 
 
+@dataclass(frozen=True)
+class RetrievalResult:
+    """What retrieval found, plus whether any of it is actually about the question.
+
+    The second part is why this type exists. A bare list of chunks cannot express
+    "I returned four rows and none of them are relevant", yet that is the normal
+    state of a RAG system asked something outside its corpus — and the state a
+    grounding guard has to detect. Separating "what came back" from "is any of it
+    evidence" stops callers inferring the second from the length of the first.
+
+    `best_vector_distance` is the diagnostic to watch when calibrating
+    `max_distance`; `keyword_hits` is independent evidence, because
+    `websearch_to_tsquery` ANDs its terms, so a hit means every content word of
+    the question appeared in one chunk.
+    """
+
+    scored_docs: list[tuple[Document, float]]
+    relevant: bool
+    best_vector_distance: float | None
+    keyword_hits: int
+
+    @property
+    def docs(self) -> list[Document]:
+        return [doc for doc, _ in self.scored_docs]
+
+    @classmethod
+    def scoped(cls, docs: list[Document]) -> "RetrievalResult":
+        """Whole-document reads: the user scoped them, so presence is relevance."""
+        return cls([(d, 0.0) for d in docs], bool(docs), None, 0)
+
+
+def _is_relevant(best_distance: float | None, keyword_hits: int, has_docs: bool) -> bool:
+    """Two independent ways to be relevant, because the arms fail on different
+    questions and refusing when either succeeds would undo hybrid retrieval.
+
+    Dense: the nearest chunk is within `max_distance` — semantic evidence.
+    Sparse: the keyword arm matched at all — lexical evidence, and strong, since
+    the tsquery ANDs its terms. That arm is exactly what rescues exact-token
+    queries (a policy code, an ID) where embeddings are weakest, so gating on
+    distance alone would refuse the queries hybrid search exists to answer."""
+    if not has_docs:
+        return False
+    if settings.max_distance <= 0:
+        return True                                     # gate disabled
+    return (best_distance is not None and best_distance <= settings.max_distance) or keyword_hits > 0
+
+
+async def retrieve_scored(
+    query: str,
+    k: int,
+    document_id: uuid.UUID | None = None,
+    *,
+    use_reranker: bool | None = None,
+) -> RetrievalResult:
+    """Retrieval plus a relevance verdict — the entrypoint the ask flow uses.
+
+    The verdict is computed on the RAW arms, before fusion, because that is the
+    last point a calibrated distance exists."""
+    n = settings.retrieval_candidates
+
+    if settings.hybrid_enabled:
+        vector_pairs, keyword_docs = await asyncio.gather(
+            _vector_candidates_scored(query, n, document_id),
+            _keyword_candidates(query, n, document_id),
+        )
+        fused = reciprocal_rank_fusion([[d for d, _ in vector_pairs], keyword_docs])
+    else:
+        vector_pairs = await _vector_candidates_scored(query, n, document_id)
+        keyword_docs = []
+        fused = [(d, 1.0 / (i + 1)) for i, (d, _) in enumerate(vector_pairs)]
+
+    docs = [doc for doc, _ in fused]
+    should_rerank = (settings.reranker.lower() != "none") if use_reranker is None else use_reranker
+
+    if should_rerank and docs:
+        pool = docs[: settings.rerank_pool]
+        scored = (await asyncio.to_thread(get_reranker().rerank, query, pool))[:k]
+    else:
+        scored = fused[:k]
+
+    best_distance = min((dist for _, dist in vector_pairs), default=None)
+    relevant = _is_relevant(best_distance, len(keyword_docs), bool(scored))
+
+    log.info(
+        "relevance",
+        stage="relevance",
+        relevant=relevant,
+        best_vector_distance=best_distance,
+        keyword_hits=len(keyword_docs),
+        threshold=settings.max_distance,
+    )
+    return RetrievalResult(scored, relevant, best_distance, len(keyword_docs))
+
+
 async def retrieve(
     query: str,
     k: int,
@@ -136,25 +244,10 @@ async def retrieve(
     *,
     use_reranker: bool | None = None,
 ) -> list[tuple[Document, float]]:
-    """Public entrypoint used by the ask flow and the eval harness.
+    """Retrieval only, no relevance verdict — used by the eval harness, which
+    measures raw retrieval quality separately from the refusal policy.
 
-    Returns up to `k` (Document, score) pairs, best-first. `use_reranker`
-    overrides the configured default (handy for before/after eval)."""
-    n = settings.retrieval_candidates
-
-    if settings.hybrid_enabled:
-        vector_docs, keyword_docs = await asyncio.gather(
-            _vector_candidates(query, n, document_id),
-            _keyword_candidates(query, n, document_id),
-        )
-        fused = reciprocal_rank_fusion([vector_docs, keyword_docs])
-    else:
-        fused = [(d, 1.0 / (i + 1)) for i, d in enumerate(await _vector_candidates(query, n, document_id))]
-
-    docs = [doc for doc, _ in fused]
-    should_rerank = (settings.reranker.lower() != "none") if use_reranker is None else use_reranker
-
-    if should_rerank and docs:
-        reranked = await asyncio.to_thread(get_reranker().rerank, query, docs)
-        return reranked[:k]
-    return fused[:k]
+    Delegates to `retrieve_scored` so there is one implementation and the two
+    entrypoints cannot drift."""
+    result = await retrieve_scored(query, k, document_id, use_reranker=use_reranker)
+    return result.scored_docs
