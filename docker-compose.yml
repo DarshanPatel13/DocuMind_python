@@ -102,6 +102,10 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      # Contextual retrieval: one LLM call per chunk at ingestion, prefixing each
+      # chunk with a line situating it in its document. Off by default — it is a
+      # real cost, paid once at write time, and worth A/B-ing against the evals.
+      CONTEXTUAL_RETRIEVAL_ENABLED: ${CONTEXTUAL_RETRIEVAL_ENABLED:-false}
       POSTGRES_HOST: postgres
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       STORAGE_DIR: /data/storage
@@ -129,7 +133,13 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       HYBRID_ENABLED: ${HYBRID_ENABLED:-true}
-      RERANKER: ${RERANKER:-none}
+      RERANKER: ${RERANKER:-none}          # none | cross-encoder | llm (llm needs no torch)
+      # Relevance bar for the dense arm; 0 disables. Without it the "no context"
+      # guard can only fire on an empty corpus. Calibrate per corpus.
+      MAX_DISTANCE: ${MAX_DISTANCE:-0.55}
+      # Multi-turn memory + follow-up query rewriting. A/B both against the evals.
+      HISTORY_TURNS: ${HISTORY_TURNS:-4}
+      REWRITE_ENABLED: ${REWRITE_ENABLED:-true}
       POSTGRES_HOST: postgres
       MONGO_URI: mongodb://mongodb:27017
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}

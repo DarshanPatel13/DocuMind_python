@@ -6,7 +6,7 @@ ask service (the empty-retrieval short-circuit).
 from __future__ import annotations
 
 from langchain_core.documents import Document
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
 # Exact string the model is told to return when the context has no answer.
 # Exact, because exact strings are testable and detectable downstream.
@@ -41,8 +41,27 @@ WHOLE_DOC_NOTE = (
 
 
 def build_messages(
-    question: str, docs: list[Document], *, whole_document: bool = False
+    question: str,
+    docs: list[Document],
+    *,
+    whole_document: bool = False,
+    history: list[tuple[str, str]] | None = None,
 ) -> list[BaseMessage]:
+    """Grounded prompt, optionally preceded by recent conversation turns.
+
+    History is replayed as real Human/AI message pairs rather than pasted into
+    the user message, so the model sees turn structure the way it was trained on
+    it, and so the grounding rules stay clearly separated from conversational
+    context. The retrieved context still governs the answer: prior turns exist to
+    resolve references like "it" and "that", not to be cited as sources."""
     system = SYSTEM_PROMPT + (WHOLE_DOC_NOTE if whole_document else "")
-    user = f"Context:\n{build_context(docs)}\n\nQuestion: {question}"
-    return [SystemMessage(content=system), HumanMessage(content=user)]
+    messages: list[BaseMessage] = [SystemMessage(content=system)]
+
+    for prev_question, prev_answer in history or []:
+        messages.append(HumanMessage(content=prev_question))
+        messages.append(AIMessage(content=prev_answer))
+
+    messages.append(
+        HumanMessage(content=f"Context:\n{build_context(docs)}\n\nQuestion: {question}")
+    )
+    return messages

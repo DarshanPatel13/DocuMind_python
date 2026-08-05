@@ -75,8 +75,29 @@ class CommonSettings(BaseSettings):
     top_k: int = 4
     hybrid_enabled: bool = True
     retrieval_candidates: int = 20
-    reranker: str = "none"               # "none" | "cross-encoder"
+    reranker: str = "none"               # "none" | "cross-encoder" | "llm"
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    rerank_pool: int = 12                # fused candidates handed to the reranker
+    rerank_snippet_chars: int = 500      # chars per candidate shown to an LLM reranker
+
+    # Relevance bar for the DENSE arm (cosine distance; lower = closer). 0 disables.
+    #
+    # Retrieval is not a relevance test: `ORDER BY ... LIMIT k` returns k rows from
+    # any non-empty collection, RRF then replaces the distances with rank-only
+    # scores, and a reranker can only reorder — it has no "none of these are any
+    # good". Without this bar the "no context" guard in the ask flow can only fire
+    # on an empty corpus, and every refusal is really the model choosing to obey
+    # the prompt. 0.55 is a STARTING POINT for text-embedding-3-small, not a
+    # measured value — calibrate against a real corpus (see EVALS_GUIDE.md).
+    max_distance: float = 0.55
+
+    # ---- Conversation memory + query rewriting ----
+    history_turns: int = 4               # recent turns replayed into the prompt
+    rewrite_enabled: bool = True         # condense follow-ups into standalone queries
+
+    # ---- Contextual retrieval (ingestion side) ----
+    contextual_retrieval_enabled: bool = False
+    contextual_context_chars: int = 2000  # document prefix shown to the context writer
 
     @model_validator(mode="after")
     def _apply_provider_profile(self) -> "CommonSettings":

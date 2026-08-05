@@ -26,6 +26,7 @@ from app.guardrails import INJECTION_REFUSAL, detect_prompt_injection
 from app.intent import is_aggregate_query
 from app.observability import get_langfuse_handler
 from app.prompt import NO_INFO_ANSWER, build_messages
+from app.query_rewriter import QueryRewriter
 
 log = get_logger(__name__)
 
@@ -43,9 +44,10 @@ class AskService:
     chat model is injectable (constructor arg) so tests can pass a fake instead of
     calling a real LLM."""
 
-    def __init__(self, chat_model=None, top_k: int | None = None) -> None:
+    def __init__(self, chat_model=None, top_k: int | None = None, rewriter=None) -> None:
         self._chat_model = chat_model            # injectable for tests
         self.top_k = top_k or settings.top_k
+        self._rewriter = rewriter                # injectable for tests
 
     @property
     def chat_model(self):
@@ -53,23 +55,36 @@ class AskService:
             self._chat_model = get_chat_model()
         return self._chat_model
 
-    async def _gather_docs(self, req: AskRequest, whole_doc: bool):
-        """Pick chunks for the prompt. Whole-document mode (list-all / summarize)
-        reads the entire target document; otherwise we use hybrid top-k."""
+    @property
+    def rewriter(self) -> QueryRewriter:
+        if self._rewriter is None:
+            self._rewriter = QueryRewriter()
+        return self._rewriter
+
+    async def _gather_docs(
+        self, query: str, req: AskRequest, whole_doc: bool
+    ) -> retrieval.RetrievalResult:
+        """Pick chunks for the prompt, and say whether any of them are relevant.
+
+        Whole-document mode (list-all / summarize) reads the entire target
+        document and is presence-is-relevance: the user scoped it deliberately.
+        Otherwise hybrid top-k, gated on the dense arm's distance.
+
+        `query` is the (possibly rewritten) RETRIEVAL query, which is not always
+        the user's question — see query_rewriter."""
         if whole_doc:
             document_id = req.document_id
             if document_id is None:
                 # No scope chosen: pick the single most relevant document, then read
                 # all of it (this is what "list all questions" across docs needs).
-                top = await retrieval.retrieve(req.question, 1, None)
+                top = await retrieval.retrieve(query, 1, None)
                 if top:
                     document_id = top[0][0].metadata.get("document_id")
             if document_id is not None:
                 docs = await retrieval.fetch_document_chunks(document_id)
                 if docs:
-                    return docs
-        results = await retrieval.retrieve(req.question, self.top_k, req.document_id)
-        return [doc for doc, _score in results]
+                    return retrieval.RetrievalResult.scoped(docs)
+        return await retrieval.retrieve_scored(query, self.top_k, req.document_id)
 
     async def answer_stream(self, req: AskRequest) -> AsyncIterator[str]:
         conversation_id = req.conversation_id or uuid.uuid4().hex
@@ -92,11 +107,25 @@ class AskService:
             )
             return
 
-        # 1. Choose a retrieval strategy. "List all / summarize the whole document"
+        # 1. Multi-turn memory. Recent turns are replayed into the prompt so the
+        #    model can resolve references, and are used to condense a follow-up
+        #    into a standalone RETRIEVAL query — the rewrite has to happen before
+        #    embedding, because by prompt-building time retrieval already ran.
+        history = await conversation_service.recent_turns(
+            conversation_id, settings.history_turns
+        )
+        retrieval_query = (
+            await self.rewriter.rewrite(req.question, history)
+            if settings.rewrite_enabled
+            else req.question
+        )
+
+        # 2. Choose a retrieval strategy. "List all / summarize the whole document"
         #    queries can't be answered by top-k (it only sees k of N chunks), so for
         #    that intent we read the ENTIRE target document instead.
-        whole_doc = is_aggregate_query(req.question)
-        docs = await self._gather_docs(req, whole_doc)
+        whole_doc = is_aggregate_query(retrieval_query)
+        result = await self._gather_docs(retrieval_query, req, whole_doc)
+        docs = result.docs
 
         # Cap displayed citations in whole-doc mode (don't flood the UI with N chips).
         cite_docs = docs[:6] if whole_doc else docs
@@ -114,7 +143,9 @@ class AskService:
             stage="retrieve",
             conversation_id=conversation_id,
             matches=len(docs),
+            relevant=result.relevant,
             mode="whole_document" if whole_doc else "hybrid",
+            history_turns=len(history),
         )
 
         # 2. Emit citations + the conversation id up front so the UI can render
@@ -146,13 +177,27 @@ class AskService:
                 }
             )
 
-        # 3. Grounding guard: no context -> return the sentinel WITHOUT calling
-        #    the LLM (it could only improvise).
-        if not docs:
+        # 3. Grounding guard: no RELEVANT context -> return the sentinel WITHOUT
+        #    calling the LLM (it could only improvise).
+        #
+        #    This asks the retriever for a verdict rather than testing `not docs`.
+        #    The vector search returns top-k rows whether or not any of them are
+        #    about the question, so emptiness only ever catches an empty corpus —
+        #    see retrieval._is_relevant.
+        if not result.relevant:
+            log.info(
+                "refused",
+                stage="refuse",
+                conversation_id=conversation_id,
+                best_vector_distance=result.best_vector_distance,
+                keyword_hits=result.keyword_hits,
+            )
             answer = NO_INFO_ANSWER
             yield _sse({"type": "token", "token": answer})
         else:
-            messages = build_messages(req.question, docs, whole_document=whole_doc)
+            messages = build_messages(
+                req.question, docs, whole_document=whole_doc, history=history
+            )
             # Trace this LLM call in Langfuse when configured (no-op otherwise).
             handler = get_langfuse_handler()
             config = {"callbacks": [handler]} if handler else {}

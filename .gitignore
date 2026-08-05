@@ -37,3 +37,6 @@ backend/storage/
 .vscode/
 *.iml
 .DS_Store
+
+# Local test venv (not part of the project)
+.venv/
