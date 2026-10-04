@@ -15,3 +15,13 @@ export function setToken(token: string): void {
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
+
+// Fired when the gateway rejects our token (expired or invalid). AuthProvider
+// listens so the app drops back to the login screen instead of staying on a
+// signed-in page where every request fails.
+export const UNAUTHORIZED_EVENT = "documind:unauthorized";
+
+export function notifyUnauthorized(): void {
+  clearToken();
+  window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+}
