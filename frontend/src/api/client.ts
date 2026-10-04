@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { clearToken, getToken } from "../auth/token";
+import { getToken, notifyUnauthorized } from "../auth/token";
 
 // Base URL is the GATEWAY now — the frontend never talks to the services
 // directly. Defaults to the local gateway; baked from VITE_API_BASE_URL at build.
@@ -22,12 +22,13 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// If the gateway rejects the token, drop it so the app falls back to login.
+// If the gateway rejects the token, drop it and signal the auth state so the
+// app falls back to login.
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error?.response?.status === 401) {
-      clearToken();
+      notifyUnauthorized();
     }
     return Promise.reject(error);
   },

@@ -1,7 +1,7 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { login as loginRequest } from "../api/documind";
-import { clearToken, getToken, setToken } from "./token";
+import { UNAUTHORIZED_EVENT, clearToken, getToken, setToken } from "./token";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -13,6 +13,13 @@ const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setTokenState] = useState<string | null>(() => getToken());
+
+  // The API layer fires this on a 401 (expired/invalid token): sign out.
+  useEffect(() => {
+    const onUnauthorized = () => setTokenState(null);
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+  }, []);
 
   const value = useMemo<AuthState>(
     () => ({
