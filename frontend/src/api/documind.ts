@@ -1,6 +1,6 @@
 import type { AxiosProgressEvent } from "axios";
 
-import { getToken } from "../auth/token";
+import { getToken, notifyUnauthorized } from "../auth/token";
 import type {
   AskRequest,
   AskStreamHandlers,
@@ -83,6 +83,8 @@ export async function streamAsk(
     handlers.onError(error instanceof Error ? error : new Error("Network error"));
     return;
   }
+
+  if (response.status === 401) notifyUnauthorized();
 
   if (!response.ok || !response.body) {
     handlers.onError(new Error(`Request failed with status ${response.status}`));
