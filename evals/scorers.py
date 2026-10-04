@@ -51,10 +51,25 @@ def keywords_present(answer: str, keywords: list[str]) -> bool:
     return all(k.lower() in lowered for k in keywords)
 
 
+def _refusal_tail(sentinel: str) -> re.Pattern[str]:
+    """The sentinel without its full stop, followed by a harmless 'to answer
+    this question' style tail. Small models often write
+    "...uploaded documents to answer this question." — still a refusal."""
+    stem = re.escape(sentinel.rstrip("."))
+    return re.compile(
+        rf"({stem})\s+to\s+(?:answer|respond\s+to|address)\s+(?:this|that|your|the)"
+        r"(?:\s+(?:question|query|request))?\s*\.?"
+    )
+
+
 def refusal_correct(answer: str, *, sentinel: str = NO_INFO_ANSWER, slack: int = 60) -> float:
-    """1.0 only if the exact refusal sentinel appears with no substantial extra
-    content (fabrication appended to a refusal still counts as a failure)."""
-    text = (answer or "").strip()
+    """1.0 only if the refusal sentinel appears with no substantial extra
+    content (fabrication appended to a refusal still counts as a failure).
+
+    The sentinel must still match exactly, apart from one allowed rewording of
+    its tail ("...documents to answer this question."). Any other continuation
+    — e.g. "...documents, but the CEO is probably X" — does not count."""
+    text = _refusal_tail(sentinel).sub(r"\1.", (answer or "").strip(), count=1)
     if sentinel not in text:
         return 0.0
     return 1.0 if len(text) <= len(sentinel) + slack else 0.0

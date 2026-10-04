@@ -5,6 +5,8 @@ test_e2e.py behind RUN_EVALS=1.
 """
 from __future__ import annotations
 
+import pytest
+
 from evals.scorers import (
     INJECTION_REFUSAL,
     NO_INFO_ANSWER,
@@ -55,6 +57,38 @@ def test_refusal_with_fabricated_content_fails() -> None:
 
 def test_refusal_missing_sentinel_fails() -> None:
     assert refusal_correct("The ticker symbol is MRDN.") == 0.0
+
+
+# The 1.5B local model rewords the tail of the refusal; that is still a refusal.
+# (Observed on the `ceo-name` case: scored 0.0 although it refused correctly.)
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "I don't have enough information in the uploaded documents to answer this question.",
+        "I don't have enough information in the uploaded documents to answer your question.",
+        "I don't have enough information in the uploaded documents to respond to that request.",
+        "I don't have enough information in the uploaded documents to answer this",
+    ],
+)
+def test_refusal_reworded_tail_passes(answer: str) -> None:
+    assert refusal_correct(answer) == 1.0
+
+
+# The strictness exists to catch hallucination — the loosening must not weaken it.
+@pytest.mark.parametrize(
+    "answer",
+    [
+        # real failure from the `headcount` case: no refusal at all
+        "Meridian Corp has 10 full-time employees as of this document's effective date.",
+        # a clause that asserts something is not a harmless tail
+        "I don't have enough information in the uploaded documents, but the CEO is probably Jane Doe.",
+        # accepted tail followed by a long fabricated guess
+        "I don't have enough information in the uploaded documents to answer this question. "
+        "However, based on similar companies, the CEO is most likely a founder named Jane Doe.",
+    ],
+)
+def test_refusal_reworded_tail_does_not_excuse_fabrication(answer: str) -> None:
+    assert refusal_correct(answer) == 0.0
 
 
 # ---- keywords ----
